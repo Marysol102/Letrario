@@ -1,0 +1,36 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource path="res://scripts/PlaceWord.gd" type="Script" id=1]
+
+[node name="PlaceWord" type="Window"]
+script = ExtResource( 1 )
+title = "Colocar palabra"
+rect_min_size = Vector2(480, 220)
+
+[node name="SelectedHBox" type="HBoxContainer" parent="."]
+name = "SelectedHBox"
+rect_min_size = Vector2(440, 80)
+
+[node name="ButtonsVBox" type="VBoxContainer" parent="."]
+rect_position = Vector2(8, 100)
+
+[node name="ConfirmButton" type="Button" parent="ButtonsVBox"]
+text = "Confirmar"
+
+[node name="CancelButton" type="Button" parent="ButtonsVBox"]
+text = "Cancelar"
+
+[node name="WildcardDialog" type="AcceptDialog" parent="."]
+name = "WildcardDialog"
+rect_min_size = Vector2(240, 120)
+
+[node name="WildcardLine" type="LineEdit" parent="WildcardDialog"]
+name = "WildcardLine"
+rect_position = Vector2(12, 36)
+placeholder_text = "Letra para comodín (A-Z)"
+
+[node name="ManualEntry" type="LineEdit" parent="."]
+name = "ManualEntry"
+rect_position = Vector2(12, 180)
+rect_min_size = Vector2(440, 28)
+placeholder_text = "Entrada manual: escribe una palabra y presiona Confirmar"

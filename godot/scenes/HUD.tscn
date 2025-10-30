@@ -1,0 +1,35 @@
+[gd_scene load_steps=2 format=3]
+
+[node name="HUD" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Panel" type="Panel" parent="."]
+margin_left = 20.0
+margin_top = 20.0
+margin_right = 420.0
+margin_bottom = 220.0
+
+[node name="StartButton" type="Button" parent="Panel"]
+text = "Iniciar / Reset"
+rect_position = Vector2(8, 8)
+
+[node name="PlaceWordButton" type="Button" parent="Panel"]
+text = "Colocar Palabra"
+rect_position = Vector2(120, 8)
+
+[node name="ShopButton" type="Button" parent="Panel"]
+text = "Tienda"
+rect_position = Vector2(320, 8)
+
+[node name="SaveButton" type="Button" parent="Panel"]
+text = "Guardar"
+rect_position = Vector2(8, 80)
+
+[node name="LoadButton" type="Button" parent="Panel"]
+text = "Cargar"
+rect_position = Vector2(120, 80)
+
+[node name="HandLabel" type="Label" parent="Panel"]
+text = "Mano: -"
+rect_position = Vector2(8, 48)
