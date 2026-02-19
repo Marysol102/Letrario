@@ -1,6 +1,0 @@
-[application]
-config/name="LetterlikeSP"
-run/main_scene="res://scenes/Main.tscn"
-
-[autoload]
-GameManager="res://scripts/GameManager.gd"
