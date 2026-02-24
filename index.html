@@ -2118,6 +2118,7 @@ function freshState() {
         shopVisits: 0,
         extraBagLetters: [],
         usedCurseIds: [],   // curses already used by previous bosses — never repeated
+        dailyBoughtIds: [],  // daily once-items already purchased
         secretWord: null,
         secretBonus: 0,
         secretReveal: '',
@@ -2955,7 +2956,10 @@ function playWord() {
 
     if (!isValidWord(word)) {
         setFeedback(`"${word}" no existe`, 'err');
-        clearWord();
+        // Deselect tiles but keep the feedback visible
+        gameState.selectedIds = [];
+        renderWordDisplay();
+        renderHand();
         return;
     }
 
@@ -3250,6 +3254,12 @@ function setFeedback(msg, type) {
     const el = document.getElementById('feedback');
     el.textContent = msg;
     el.className = 'feedback ' + type;
+    if (msg && type === 'err') {
+        clearTimeout(el._feedbackTimer);
+        el._feedbackTimer = setTimeout(() => {
+            if (el.textContent === msg) { el.textContent = ''; el.className = 'feedback'; }
+        }, 2000);
+    }
 }
 
 function addLog(msg, type, pts) {
@@ -4329,17 +4339,22 @@ function seededShuffle(arr, rng) {
     return a;
 }
 
+const DAILY_ONCE_IDS = ['pos1','pos2','pos3','pos4','pos5','pos6','pos7','pos123','pos456','value_boost','comodin_extra','cincel']; // solo aparecen 1 vez
 const DAILY_SHOP_IDS = [
     'hand_large','alquimia','pos1','pos2','pos3','pos4','pos5','pos6','pos7',
     'pos123','pos456','value_boost','comodin_extra','cincel'
 ];
 
 function getDailyShopOffers(visitIndex, rng) {
-    const available = SHOP_ITEMS.filter(i => DAILY_SHOP_IDS.includes(i.id));
+    const bought = gameState ? (gameState.dailyBoughtIds || []) : [];
+    const available = SHOP_ITEMS.filter(i =>
+        DAILY_SHOP_IDS.includes(i.id) &&
+        !(DAILY_ONCE_IDS.includes(i.id) && bought.includes(i.id))
+    );
     const shuffled = seededShuffle(available, rng);
-    const start = (visitIndex * 3) % shuffled.length;
+    const start = (visitIndex * 3) % Math.max(shuffled.length, 1);
     const picks = [];
-    for (let i = 0; picks.length < 3; i++) {
+    for (let i = 0; picks.length < 3 && i < shuffled.length; i++) {
         picks.push(shuffled[(start + i) % shuffled.length]);
     }
     return picks;
@@ -4443,7 +4458,7 @@ function openDailyShop() {
     // Daily mode: prices are halved (rounded up)
     const dailyOffers = offers.map(item => ({
         ...item,
-        dailyPrice: Math.ceil(item.price / 2)
+        dailyPrice: Math.ceil(item.price / 2) + 1
     }));
     gs._dailyOffers = dailyOffers;
     grid.innerHTML = dailyOffers.map((item, idx) => {
@@ -4470,6 +4485,10 @@ function buyDailyItem(idx) {
     if (gs.coins < price || !item.canBuy(gs)) return;
     gs.coins -= price;
     item.apply(gs);
+    if (DAILY_ONCE_IDS.includes(item.id)) {
+        if (!gs.dailyBoughtIds) gs.dailyBoughtIds = [];
+        gs.dailyBoughtIds.push(item.id);
+    }
     renderBuffBar();
     renderDailyShop(); // re-render without advancing shop visit
 }
