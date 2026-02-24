@@ -1,0 +1,4626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letrario</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #3a2e18;
+            --surface: #2e2412;
+            --surface2: #2e2412;
+            --surface3: #382c18;
+            --border: rgba(200,146,42,0.22);
+            --border-bright: rgba(200,146,42,0.5);
+            --gold: #c8922a;
+            --gold-light: #e8b84b;
+            --gold-pale: #f5dfa0;
+            --gold-dim: rgba(200,146,42,0.12);
+            --crimson: #8b1a1a;
+            --crimson-light: #c0392b;
+            --red: #e05050;
+            --blue: #6ab0d8;
+            --green: #5aaf5a;
+            --aged: #9a7840;
+            --aged-dim: rgba(154,120,64,0.5);
+            --text: #f0e4c8;
+            --text-muted: #a08858;
+            --text-dim: #6a5530;
+            --neon: #b09adc;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-size: 14px; }
+
+        body {
+            font-family: 'IM Fell English', serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Noise + vignette */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E"),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.15' numOctaves='2' seed='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='3'/%3E%3C/filter%3E%3Crect width='100' height='100' fill='%23c8922a' opacity='0.012' filter='url(%23g)'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1000;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* ---- SCREENS ---- */
+        .screen { display: none; width: 100%; max-width: 960px; padding: 16px; position: relative; z-index: 1; }
+        .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+        /* ---- START SCREEN ---- */
+        #screen-start {
+            min-height: 100vh;
+            justify-content: center;
+            gap: 32px;
+        }
+
+        .logo { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+        .logo-ornament {
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            letter-spacing: 10px;
+            color: var(--gold);
+            opacity: 0.6;
+            text-transform: uppercase;
+        }
+
+        .logo-divider {
+            width: 280px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            position: relative;
+            margin: 4px 0;
+        }
+        .logo-divider::before, .logo-divider::after {
+            content: '◆';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gold);
+            font-size: 7px;
+        }
+        .logo-divider::before { left: 18%; }
+        .logo-divider::after  { right: 18%; }
+
+        .logo-title {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: clamp(48px, 11vw, 90px);
+            font-weight: 900;
+            color: var(--gold-light);
+            letter-spacing: 4px;
+            line-height: 1;
+            text-shadow:
+                0 0 40px rgba(200,146,42,0.5),
+                0 0 80px rgba(200,146,42,0.2),
+                2px 4px 0 rgba(0,0,0,0.8);
+            animation: glowPulse 4s ease-in-out infinite;
+        }
+        @keyframes glowPulse {
+            0%,100% { text-shadow: 0 0 40px rgba(200,146,42,0.5), 0 0 80px rgba(200,146,42,0.2), 2px 4px 0 rgba(0,0,0,0.8); }
+            50%      { text-shadow: 0 0 60px rgba(200,146,42,0.7), 0 0 120px rgba(200,146,42,0.3), 2px 4px 0 rgba(0,0,0,0.8); }
+        }
+
+        .logo-sub {
+            font-family: 'IM Fell English', serif;
+            font-style: italic;
+            font-size: 13px;
+            letter-spacing: 4px;
+            color: var(--aged);
+            margin-top: 4px;
+        }
+
+        .start-info {
+            font-family: 'IM Fell English', serif;
+            font-style: italic;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 2;
+        }
+
+        .start-btn {
+            font-family: 'Cinzel', serif;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 5px;
+            background: linear-gradient(180deg, var(--surface3), var(--surface));
+            color: var(--gold-light);
+            border: 1px solid var(--gold);
+            padding: 14px 40px;
+            border-radius: 3px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.25s;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+        }
+        .start-btn:hover {
+            background: linear-gradient(180deg, var(--gold), #a07020);
+            color: var(--bg);
+            box-shadow: 0 0 24px rgba(200,146,42,0.45), 0 4px 16px rgba(0,0,0,0.6);
+            transform: translateY(-1px);
+        }
+
+        /* ---- HUD ---- */
+        #screen-game { padding-top: 0; gap: 0; }
+
+        .hud {
+            width: 100%;
+            background: linear-gradient(180deg, var(--surface2), var(--surface));
+            border-bottom: 1px solid var(--border);
+            padding: 10px 20px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .hud::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            opacity: 0.4;
+        }
+
+        .hud-top { display: flex; align-items: center; gap: 0; }
+
+        .hud-section { display: flex; flex-direction: column; gap: 2px; flex: 1; text-align: center; }
+        .hud-section:first-child { text-align: left; }
+        .hud-section:last-child { text-align: right; }
+
+        .hud-label {
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            letter-spacing: 3px;
+            color: var(--aged);
+            text-transform: uppercase;
+        }
+
+        .hud-value {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--gold-light);
+            line-height: 1;
+        }
+        .hud-value.red  { color: var(--red); }
+        .hud-value.blue { color: var(--blue); }
+
+        .btn-exit-hud {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 13px;
+            width: 28px; height: 28px;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s;
+            padding: 0;
+            font-family: 'Cinzel', serif;
+        }
+        .btn-exit-hud:hover { border-color: var(--red); color: var(--red); }
+
+        .hud-bottom { display: flex; flex-direction: column; gap: 5px; }
+
+        .hud-progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Cinzel', serif;
+            font-size: 15px;
+            letter-spacing: 2px;
+            color: var(--aged);
+        }
+
+        .hud-round { font-family: 'Cinzel', serif; font-size: 15px; letter-spacing: 2px; color: var(--aged); white-space: nowrap; }
+
+        .progress-bar-outer {
+            height: 6px;
+            background: rgba(200,146,42,0.1);
+            border: 1px solid rgba(200,146,42,0.2);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-bar-inner {
+            height: 100%;
+            background: linear-gradient(90deg, #b02020, var(--red));
+            border-radius: 3px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+        .progress-bar-inner::after {
+            content: '';
+            position: absolute;
+            right: 0; top: 0; bottom: 0;
+            width: 20px;
+            background: linear-gradient(90deg, transparent, rgba(240,120,120,0.5));
+            animation: shimmer 2s ease-in-out infinite;
+        }
+        @keyframes shimmer { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+        /* ---- GAME BODY ---- */
+        .game-body {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 20px;
+            gap: 14px;
+        }
+
+        /* ---- WORD DISPLAY ---- */
+        .word-area {
+            width: 100%;
+            background: linear-gradient(180deg, var(--surface2), var(--surface));
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            min-height: 130px;
+            justify-content: center;
+            position: relative;
+        }
+        .word-area::before {
+            content: '✦ ENCANTAMIENTO ✦';
+            position: absolute;
+            top: -9px; left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Cinzel', serif;
+            font-size: 13px;
+            letter-spacing: 4px;
+            color: var(--gold);
+            background: var(--bg);
+            padding: 0 10px;
+            white-space: nowrap;
+        }
+
+        .word-display {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+            min-height: 66px;
+            align-items: center;
+        }
+
+        .word-letter {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 34px;
+            font-weight: 700;
+            color: var(--gold-light);
+            background: linear-gradient(145deg, var(--surface3), var(--surface));
+            border: 1px solid var(--gold);
+            width: 56px;
+            height: 66px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            animation: letterPop 0.15s ease;
+            position: relative;
+            box-shadow: inset 0 1px 0 rgba(200,146,42,0.3), 0 4px 8px rgba(0,0,0,0.5);
+        }
+        .word-letter::before {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            border: 1px solid rgba(200,146,42,0.12);
+            border-radius: 2px;
+            pointer-events: none;
+        }
+        .word-letter .letter-val {
+            position: absolute;
+            bottom: 3px; right: 5px;
+            font-family: 'Cinzel', serif;
+            font-size: 8px;
+            color: var(--aged);
+            opacity: 0.8;
+        }
+
+        @keyframes letterPop {
+            0%   { transform: scale(0.7) rotate(-3deg); opacity: 0; }
+            100% { transform: scale(1)   rotate(0deg);  opacity: 1; }
+        }
+
+        .word-score-preview {
+            font-family: 'Cinzel', serif;
+            font-size: 18px;
+            color: var(--aged);
+            letter-spacing: 2px;
+            min-height: 18px;
+        }
+
+        .feedback {
+            font-family: 'IM Fell English', serif;
+            font-style: italic;
+            font-size: 17px;
+            color: var(--text-muted);
+            min-height: 20px;
+            transition: all 0.2s;
+        }
+        .feedback.ok    { color: var(--gold-light); }
+        .feedback.error { color: var(--red); }
+
+        .word-actions {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* ---- BUTTONS ---- */
+        .btn {
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 10px 20px;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            background: linear-gradient(180deg, var(--surface3), var(--surface));
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover:not(:disabled) {
+            border-color: var(--gold);
+            color: var(--gold-light);
+        }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .btn-play {
+            background: linear-gradient(180deg, var(--surface3), var(--surface));
+            border-color: var(--gold);
+            color: var(--gold-light);
+            font-size: 12px;
+            letter-spacing: 4px;
+            padding: 12px 28px;
+        }
+        .btn-play:hover:not(:disabled) {
+            background: linear-gradient(180deg, var(--gold), #a07020);
+            color: var(--bg);
+            box-shadow: 0 0 20px rgba(200,146,42,0.4);
+        }
+
+        .btn-clear { color: var(--text-dim); font-size: 11px; padding: 10px 18px; }
+
+        /* ---- HAND ---- */
+        .hand-label {
+            font-family: 'Cinzel', serif;
+            font-size: 15px;
+            letter-spacing: 5px;
+            color: var(--aged);
+            text-transform: uppercase;
+        }
+
+        .hand-tiles, #hand, #duel-hand {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        /* ---- TILE ---- */
+        .tile {
+            background: linear-gradient(145deg, var(--surface3), var(--surface));
+            border: 1px solid var(--gold);
+            border-radius: 4px;
+            width: 64px;
+            height: 78px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s;
+            position: relative;
+            user-select: none;
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--gold-light);
+            box-shadow:
+                inset 0 1px 0 rgba(200,146,42,0.25),
+                inset 0 -1px 0 rgba(0,0,0,0.4),
+                0 4px 10px rgba(0,0,0,0.5);
+        }
+        .tile::before {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            border: 1px solid rgba(200,146,42,0.12);
+            border-radius: 2px;
+            pointer-events: none;
+        }
+        .tile:hover {
+            transform: translateY(-6px) rotate(-1deg);
+            border-color: var(--gold-light);
+            box-shadow:
+                inset 0 1px 0 rgba(200,146,42,0.4),
+                0 12px 28px rgba(0,0,0,0.7),
+                0 0 16px rgba(200,146,42,0.2);
+        }
+        .tile.selected {
+            background: linear-gradient(145deg, #3a2a0e, #2a1a08);
+            border-color: var(--gold-light);
+            transform: translateY(-4px);
+            box-shadow: 0 0 20px rgba(200,146,42,0.4), 0 8px 20px rgba(0,0,0,0.6);
+        }
+        .tile.discard-mode:hover {
+            border-color: var(--red);
+            background: rgba(139,26,26,0.15);
+            transform: translateY(-4px);
+        }
+        .tile.dragging {
+            opacity: 0.35;
+            transform: scale(0.95);
+        }
+        .tile.drag-over {
+            border-color: var(--gold-light);
+            box-shadow: 0 0 16px rgba(200,146,42,0.5);
+            transform: translateY(-6px) scale(1.05);
+        }
+        .tile-val {
+            font-family: 'Cinzel', serif;
+            font-size: 12px;
+            color: var(--aged);
+            margin-top: 4px;
+        }
+
+        /* wildcard */
+        .tile.wildcard {
+            border-color: #7a5fa8;
+            background: linear-gradient(145deg, #1a1030, #0d0818);
+            box-shadow: 0 0 16px rgba(122,95,168,0.25), 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .tile.wildcard
+        .tile.wildcard .tile-val   { color: #7a5fa8; }
+        .tile.wildcard.selected {
+            border-color: #a78bfa;
+            box-shadow: 0 0 24px rgba(167,139,250,0.35), 0 8px 20px rgba(0,0,0,0.6);
+        }
+
+        /* tile states */
+        .tile.burned {
+            border-color: var(--red);
+            background: linear-gradient(145deg, #2a0e0e, #1a0808);
+            animation: burnPulse 1.5s ease-in-out infinite;
+        }
+        .tile.burned .tile-val { color: var(--red); }
+        @keyframes burnPulse {
+            0%,100% { box-shadow: 0 0 8px rgba(224,80,80,0.3); }
+            50%      { box-shadow: 0 0 20px rgba(224,80,80,0.6); }
+        }
+
+        .tile.cursed-tile {
+            border-color: var(--crimson);
+            background: linear-gradient(145deg, #2a0e0e, #1a0808);
+            opacity: 0.75;
+        }
+        .tile.letter-day {
+            border-color: #c8a020;
+            box-shadow: 0 0 10px rgba(200,160,32,0.35);
+        }
+        .tile.letter-day .tile-val { color: #e8c040; }
+        .tile.cincel-ready {
+            border-color: var(--gold-light);
+            border-style: dashed;
+            cursor: crosshair;
+        }
+        .tile.cincel-ready:hover {
+            background: rgba(200,146,42,0.15);
+            transform: translateY(-4px);
+        }
+
+        /* word-letter pos boost */
+        .word-letter.pos-boosted {
+            border-color: #9a7aec;
+            background: linear-gradient(145deg, rgba(122,95,168,0.2), var(--surface));
+        }
+
+        /* ---- HAND CONTROLS ---- */
+        .hand-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .btn-hand {
+            font-family: 'Cinzel', serif;
+            font-size: 12px;
+            letter-spacing: 2px;
+            padding: 8px 14px;
+        }
+        .btn-hand:hover:not(:disabled) {
+            border-color: var(--aged);
+            color: var(--text);
+        }
+        .btn-discard-mode {
+            background: transparent;
+            color: var(--red);
+            border-color: rgba(224,80,80,0.3);
+            font-size: 11px;
+            padding: 9px 18px;
+        }
+        .btn-discard-mode:hover:not(:disabled) { background: rgba(139,26,26,0.12); }
+        .btn-discard-mode.active { background: rgba(139,26,26,0.15); border-color: var(--red); }
+
+        .counter-badge {
+            font-family: 'Cinzel', serif;
+            font-size: 17px;
+            color: var(--text-dim);
+        }
+
+        /* ---- BAG INFO ---- */
+        .bag-info {
+            font-family: 'Cinzel', serif;
+            font-size: 16px;
+            color: var(--text-dim);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* ---- LOG ---- */
+        .log {
+            width: 100%;
+            background: linear-gradient(180deg, var(--surface2), var(--surface));
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px 18px;
+            max-height: 140px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .log::-webkit-scrollbar { width: 4px; }
+        .log::-webkit-scrollbar-track { background: transparent; }
+        .log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+        .log-entry {
+            font-family: 'IM Fell English', serif;
+            font-size: 18px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 12px;
+            align-items: baseline;
+        }
+        .log-entry.ok  .log-word { color: var(--gold-light); }
+        .log-entry.err .log-word { color: var(--red); }
+        .log-entry.sys { color: var(--text-dim); font-style: italic; }
+        .log-word { color: var(--gold); font-weight: 500; letter-spacing: 2px; font-family: 'Cinzel', serif; }
+        .log-pts  { color: var(--gold-light); font-family: 'Cinzel', serif; }
+
+        /* ---- MODALS ---- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.88);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            padding: 16px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: linear-gradient(180deg, var(--surface2), var(--surface));
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 28px 24px;
+            max-width: 480px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            animation: modalIn 0.3s ease;
+            position: relative;
+            font-family: 'Cinzel', serif;
+        }
+        .modal::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        @keyframes modalIn {
+            0%   { transform: scale(0.92) translateY(16px); opacity: 0; }
+            100% { transform: scale(1)    translateY(0);    opacity: 1; }
+        }
+
+        .modal-title {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--gold-light);
+            text-align: center;
+            text-shadow: 0 0 20px rgba(200,146,42,0.4);
+        }
+
+        .modal-sub {
+            font-family: 'Cinzel', serif;
+            font-size: 16px;
+            letter-spacing: 4px;
+            color: var(--aged);
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .modal-stat { display: flex; gap: 8px; align-items: baseline; }
+        .modal-stat-label { font-family: 'Cinzel', serif; font-size: 12px; color: var(--text-muted); letter-spacing: 2px; }
+        .modal-stat-val {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--gold-light);
+        }
+
+        /* SHOP */
+        .shop-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+        .shop-item {
+            background: rgba(200,146,42,0.04);
+            border: 1px solid rgba(200,146,42,0.18);
+            border-radius: 4px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .shop-item:hover:not(.cant-afford):not(.already-bought) {
+            border-color: rgba(200,146,42,0.5);
+            background: rgba(200,146,42,0.09);
+        }
+        .shop-item.cant-afford   { opacity: 0.35; cursor: not-allowed; }
+        .shop-item.already-bought{ opacity: 0.3;  cursor: not-allowed; border-style: dashed; }
+
+        .shop-item-icon {
+            flex-shrink: 0;
+            width: 40px;
+            text-align: center;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--gold);
+            letter-spacing: -1px;
+        }
+        .shop-item-icon.emoji-icon { font-size: 22px; font-family: inherit; letter-spacing: 0; }
+
+        .shop-item-body { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+
+        .shop-item-name {
+            font-family: 'Cinzel', serif;
+            font-size: 18px;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+        .shop-item-desc {
+            font-family: 'IM Fell English', serif;
+            font-style: italic;
+            font-size: 17px;
+            color: var(--aged);
+            line-height: 1.4;
+        }
+        .shop-item-price {
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gold);
+            flex-shrink: 0;
+        }
+
+        .coins-display {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gold-light);
+        }
+
+        /* BOSS indicator */
+        .boss-indicator {
+            font-family: 'Cinzel', serif;
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--red);
+            text-transform: uppercase;
+            padding: 4px 14px;
+            border: 1px solid rgba(224,80,80,0.35);
+            border-radius: 20px;
+            background: rgba(139,26,26,0.08);
+            animation: flicker 4s ease-in-out infinite;
+        }
+        @keyframes flicker {
+            0%,88%,100%{opacity:1} 90%{opacity:0.6} 92%{opacity:1} 95%{opacity:0.5} 97%{opacity:1}
+        }
+
+        /* result stats */
+        .big-emoji { font-size: 48px; line-height: 1; font-family: initial; }
+        .result-stats { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+        .result-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            font-family: 'Cinzel', serif;
+            font-size: 15px;
+        }
+        .result-stat-row span:last-child { font-family: 'Cinzel', serif; color: var(--gold); }
+
+        /* discard hint */
+        .discard-hint {
+            font-family: 'Cinzel', serif;
+            font-size: 15px;
+            letter-spacing: 3px;
+            color: var(--red);
+            opacity: 0;
+            transition: opacity 0.3s;
+            height: 16px;
+        }
+        .discard-hint.visible { opacity: 1; }
+
+        /* LETTER PICKER */
+        #letter-picker {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 300;
+            align-items: flex-end;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        #letter-picker.active { display: flex; }
+
+        .picker-box {
+            background: linear-gradient(180deg, var(--surface2), var(--surface));
+            border: 1px solid var(--border);
+            border-top: 2px solid var(--gold);
+            border-radius: 12px 12px 0 0;
+            padding: 16px 14px 28px;
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            animation: slideUp 0.22s ease;
+        }
+        @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+        .picker-title {
+            font-family: 'Cinzel', serif;
+            font-size: 17px;
+            letter-spacing: 4px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+        .picker-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 5px;
+            width: 100%;
+        }
+        .picker-letter {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 15px;
+            font-weight: 700;
+            aspect-ratio: 1;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--gold-light);
+            transition: all 0.1s;
+        }
+        .picker-letter .pl-val {
+            font-family: 'Cinzel', serif;
+            font-size: 7px;
+            color: var(--aged);
+            margin-top: 1px;
+        }
+        .picker-letter:hover {
+            border-color: var(--gold-light);
+            background: var(--gold-dim);
+        }
+        .picker-cancel {
+            font-family: 'Cinzel', serif;
+            font-size: 9px;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            background: transparent;
+            border: 1px solid var(--border);
+            padding: 7px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .picker-cancel:hover { border-color: var(--red); color: var(--red); }
+
+        /* score pop */
+        .score-pop {
+            position: fixed;
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--gold-light);
+            pointer-events: none;
+            z-index: 200;
+            text-shadow: 0 0 20px rgba(200,146,42,0.6);
+            animation: scorePop 1.2s ease forwards;
+        }
+        @keyframes scorePop {
+            0%   { transform: translateY(0)   scale(0.8); opacity: 1; }
+            100% { transform: translateY(-80px) scale(1.1); opacity: 0; }
+        }
+
+        /* buff & curse bars */
+        .buff-tag {
+            font-family: 'Cinzel', serif;
+            font-size: 15px;
+            letter-spacing: 1px;
+            padding: 3px 8px;
+            background: rgba(200,146,42,0.08);
+            border: 1px solid rgba(200,146,42,0.3);
+            border-radius: 20px;
+            color: var(--gold);
+            white-space: nowrap;
+        }
+        .curse-tag {
+            font-family: 'Cinzel', serif;
+            font-size: 16px;
+            letter-spacing: 1px;
+            padding: 4px 12px;
+            background: rgba(139,26,26,0.1);
+            border: 1px solid rgba(224,80,80,0.4);
+            border-radius: 20px;
+            color: var(--red);
+            white-space: nowrap;
+        }
+
+        /* cincel btn */
+        .btn-cincel {
+            background: transparent;
+            color: var(--gold);
+            border-color: rgba(200,146,42,0.4);
+            font-size: 10px;
+            padding: 8px 14px;
+        }
+        .btn-cincel:hover:not(:disabled) { background: var(--gold-dim); border-color: var(--gold); }
+        .btn-cincel.active { background: var(--gold-dim); border-color: var(--gold); }
+        .cincel-hint { color: var(--gold) !important; }
+
+        /* coin breakdown */
+        .coin-breakdown {
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .coin-row {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Cinzel', serif;
+            font-size: 17px;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+        .coin-row.total {
+            border-top: 1px solid var(--border);
+            padding-top: 6px;
+            margin-top: 2px;
+            color: var(--gold);
+            font-size: 18px;
+        }
+
+        /* boss curse list */
+        .boss-curse-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            background: rgba(139,26,26,0.08);
+            border: 1px solid rgba(224,80,80,0.25);
+            border-radius: 4px;
+            padding: 12px;
+        }
+        .boss-curse-emoji { font-size: 22px; }
+        .boss-curse-name {
+            font-family: 'Cinzel', serif;
+            font-size: 13px;
+            color: var(--red);
+            letter-spacing: 1px;
+            margin-bottom: 3px;
+        }
+        .boss-curse-desc {
+            font-family: 'IM Fell English', serif;
+            font-style: italic;
+            font-size: 17px;
+            color: rgba(240,160,160,0.65);
+            line-height: 1.4;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 600px) {
+            .tile { width: 52px; height: 64px; }
+            .word-letter { width: 44px; height: 54px; font-size: 28px; }
+            .hud { padding: 8px 14px; }
+            .hud-value { font-size: 18px; }
+        }
+
+        /* ======== DUEL ======== */
+        #screen-duel {
+            min-height: 100vh;
+            justify-content: center;
+            gap: 20px;
+        }
+        #screen-duel-lobby {
+            min-height: 100vh;
+            justify-content: center;
+            gap: 18px;
+        }
+        #screen-duel-wait {
+            min-height: 100vh;
+            justify-content: center;
+            gap: 20px;
+        }
+        #screen-duel-game {
+            padding-top: 0;
+            gap: 0;
+        }
+
+        .duel-bar-container {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 14px 20px;
+            background: linear-gradient(180deg, var(--surface2), var(--surface));
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .duel-bar-labels {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Cinzel', serif;
+            font-size: 12px;
+        }
+        .duel-name-blue { color: #6ab0d8; letter-spacing: 2px; }
+        .duel-name-red  { color: #e05050; letter-spacing: 2px; }
+        .duel-timer { color: var(--gold); font-family: 'Cinzel Decorative', serif; font-size: 16px; }
+
+        .duel-bar-track {
+            width: 100%;
+            height: 24px;
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        .duel-bar-fill-blue {
+            position: absolute;
+            left: 0;
+            top: 0; bottom: 0;
+            background: linear-gradient(90deg, #1a5080, #4a90d8, #6ab0f5);
+            transition: width 0.5s cubic-bezier(.4,0,.2,1);
+            width: 50%;
+        }
+        .duel-bar-fill-red {
+            position: absolute;
+            right: 0;
+            top: 0; bottom: 0;
+            background: linear-gradient(270deg, #801010, #c03030, #e05050);
+            transition: width 0.5s cubic-bezier(.4,0,.2,1);
+            width: 50%;
+        }
+        .duel-bar-center {
+            position: absolute;
+            left: 50%;
+            top: 0; bottom: 0;
+            width: 3px;
+            background: var(--gold);
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+        .duel-bar-milestone {
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 2px;
+            background: rgba(232,184,75,0.4);
+            z-index: 1;
+        }
+        .duel-bar-value {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 11px;
+            color: var(--gold-light);
+            z-index: 3;
+            white-space: nowrap;
+            text-shadow: 0 0 6px rgba(0,0,0,0.8);
+        }
+
+        .side-badge {
+            display: inline-block;
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .side-badge.blue { background: #6ab0d8; box-shadow: 0 0 6px #6ab0d8; }
+        .side-badge.red  { background: #e05050; box-shadow: 0 0 6px #e05050; }
+
+        .side-selector {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            max-width: 340px;
+        }
+        .side-btn {
+            flex: 1;
+            padding: 16px;
+            border-radius: 4px;
+            border: 2px solid var(--border);
+            background: var(--surface2);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            font-family: 'Cinzel', serif;
+        }
+        .side-btn.blue.selected { border-color: #6ab0d8; background: rgba(106,176,216,0.12); }
+        .side-btn.red.selected  { border-color: #e05050; background: rgba(224,80,80,0.12); }
+        .side-btn:not(.selected) { opacity: 0.45; }
+        .side-btn:not(.locked):hover { opacity: 1; }
+        .side-btn.locked { cursor: not-allowed; }
+        .side-flame { font-size: 36px; }
+        .side-label-blue { font-size: 11px; letter-spacing: 3px; color: #6ab0d8; }
+        .side-label-red  { font-size: 11px; letter-spacing: 3px; color: #e05050; }
+
+        .sala-code-display {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 36px;
+            font-weight: 900;
+            color: var(--gold-light);
+            letter-spacing: 8px;
+            background: var(--surface2);
+            border: 1px solid var(--gold);
+            border-radius: 4px;
+            padding: 16px 28px;
+            text-shadow: 0 0 20px rgba(200,146,42,0.4);
+        }
+
+        .duel-log-entry {
+            font-family: 'IM Fell English', serif;
+            font-size: 13px;
+            display: flex;
+            gap: 8px;
+            align-items: baseline;
+            padding: 2px 0;
+        }
+        .duel-log-entry.blue { color: #6ab0d8; }
+        .duel-log-entry.red  { color: #e05050; }
+        .duel-log-entry.sys  { color: var(--text-dim); font-style: italic; font-size: 12px; }
+
+        /* Card modal */
+        .duel-cards {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+        .duel-card {
+            flex: 1;
+            padding: 16px 12px;
+            border-radius: 4px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .duel-card:hover { border-color: var(--gold); background: var(--gold-dim); transform: translateY(-2px); }
+        .duel-card .card-emoji { font-size: 28px; }
+        .duel-card .card-name { font-family: 'Cinzel', serif; font-size: 12px; color: var(--text); letter-spacing: 1px; }
+        .duel-card .card-desc { font-family: 'IM Fell English', serif; font-style: italic; font-size: 12px; color: var(--aged); line-height: 1.4; }
+        .duel-card.buff  { border-color: rgba(106,176,216,0.4); }
+        .duel-card.debuff{ border-color: rgba(224,80,80,0.4); }
+        .duel-card.buff:hover  { border-color: #6ab0d8; background: rgba(106,176,216,0.1); }
+        .duel-card.debuff:hover{ border-color: #e05050; background: rgba(224,80,80,0.1); }
+    
+        /* ── Utility classes (extracted from inline styles) ── */
+        .u-full   { width: 100%; }
+        .u-gold-btn { width:100%; border-color:var(--gold); color:var(--gold); }
+        .u-dim-sm  { font-size:10px; color:var(--text-dim); letter-spacing:3px; }
+        .u-divider { flex:1; height:1px; background:linear-gradient(90deg,transparent,var(--border),transparent); }
+        .u-divider-r { flex:1; height:1px; background:linear-gradient(270deg,transparent,var(--border),transparent); }
+        .u-lore-text { font-family:'IM Fell English',serif; font-style:italic; font-size:14px; color:var(--text-muted); line-height:1.8; }
+        .u-cinzel-dim { font-family:'Cinzel',serif; font-size:9px; letter-spacing:3px; color:var(--aged); }
+        .u-accent { color:#e8b08a; }
+
+        </style>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<!-- ======== START SCREEN ======== -->
+<div id="screen-start" class="screen active">
+    <div class="logo">
+        <div class="logo-ornament">✦ &nbsp; Grimorio de Palabras &nbsp; ✦</div>
+        <div class="logo-divider"></div>
+        <div class="logo-title">Letrario</div>
+        <div class="logo-divider"></div>
+        <div class="logo-sub">ubi verba, ibi potentia</div>
+    </div>
+    <div class="start-info">
+        Maldice las páginas con tu sangre<br>
+        Supera cada tomo para corromperlo<br>
+        Derrota a los Guardianes y revive al Diablo
+    </div>
+    <button class="start-btn" onclick="startGame()">✦ &nbsp; Comenzar el Ritual &nbsp; ✦</button>
+
+    <div style="display:flex;gap:8px;align-items:center;width:100%;max-width:360px;">
+        <input id="seed-input" type="text" placeholder="Código de partida guardada..."
+            style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:10px 12px;color:var(--text);font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;outline:none;" />
+        <button class="btn" style="white-space:nowrap;padding:10px 16px;" onclick="tryLoadSeed()">Cargar</button>
+    </div>
+    <div id="load-status" style="font-family:'Cinzel',serif;font-size:10px;color:var(--text-dim);letter-spacing:3px;text-transform:uppercase;"></div>
+
+    <div style="width:100%;max-width:360px;display:flex;align-items:center;gap:12px;margin-top:4px">
+        <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))"></div>
+        <span style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;color:var(--text-dim)">O</span>
+        <div style="flex:1;height:1px;background:linear-gradient(270deg,transparent,var(--border))"></div>
+    </div>
+
+    <button class="start-btn" onclick="showScreen('duel')"
+        style="background:linear-gradient(180deg,#1a1a2e,#0e0e1e);border-color:#6ab0d8;color:#6ab0d8;font-size:11px;margin-top:0">
+        ⚔ &nbsp; Duelo &nbsp; ⚔
+    </button>
+
+    <div style="width:100%;max-width:360px;display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))"></div>
+        <span style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;color:var(--text-dim)">O</span>
+        <div style="flex:1;height:1px;background:linear-gradient(270deg,transparent,var(--border))"></div>
+    </div>
+
+    <button class="start-btn" onclick="openDailyNameModal()"
+        style="background:linear-gradient(180deg,#2a1a1a,#1a0e0e);border-color:var(--red);color:#e8b08a;font-size:11px">
+        ☠ &nbsp; Modo Diario &nbsp; ☠
+    </button>
+</div>
+
+
+<!-- ======== SCREEN: DUEL MENU ======== -->
+<div id="screen-duel" class="screen">
+    <div class="logo" style="gap:4px">
+        <div class="logo-ornament">✦ &nbsp; Enfrentamiento &nbsp; ✦</div>
+        <div class="logo-divider"></div>
+        <div style="font-family:'Cinzel Decorative',serif;font-size:clamp(32px,8vw,60px);font-weight:900;color:var(--gold-light);letter-spacing:2px;text-align:center;text-shadow:0 0 30px rgba(200,146,42,0.4)">Duelo</div>
+        <div class="logo-divider"></div>
+        <div class="logo-sub" style="font-size:12px">dos nigromantes · una invocación</div>
+    </div>
+    <button class="start-btn" onclick="showDuelCreate()">⚔ Crear Sala</button>
+    <button class="start-btn" onclick="showDuelJoin()" style="background:linear-gradient(180deg,var(--surface3),var(--surface));border-color:var(--border);color:var(--text-muted);font-size:11px">
+        Unirse a Sala
+    </button>
+    <button class="btn" onclick="showScreen('start')" style="color:var(--text-dim);font-size:10px;margin-top:8px">← Volver</button>
+</div>
+
+<!-- ======== SCREEN: DUEL LOBBY (create/join) ======== -->
+<div id="screen-duel-lobby" class="screen">
+    <div class="logo-ornament" id="lobby-title" style="font-family:'Cinzel',serif;font-size:12px;letter-spacing:4px;color:var(--gold)">CREAR SALA</div>
+    <input id="duel-name-input" type="text" maxlength="16" placeholder="Tu nombre de nigromante..."
+        style="width:100%;max-width:340px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:12px 14px;color:var(--text);font-family:'Cinzel',serif;font-size:13px;letter-spacing:2px;outline:none;text-align:center;" />
+
+    <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:var(--aged);text-transform:uppercase">Elige tu bando</div>
+    <div class="side-selector">
+        <div class="side-btn blue selected" id="side-btn-blue" onclick="selectSide('blue')">
+            <div class="side-flame">🔵</div>
+            <div class="side-label-blue">Nigromante</div>
+        </div>
+        <div class="side-btn red" id="side-btn-red" onclick="selectSide('red')">
+            <div class="side-flame">🔴</div>
+            <div class="side-label-red">Bibliotecario</div>
+        </div>
+    </div>
+
+    <div id="join-code-row" style="display:none;flex-direction:column;gap:8px;align-items:center;width:100%;max-width:340px">
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:var(--aged)">CÓDIGO DE SALA</div>
+        <input id="duel-join-code" type="text" maxlength="4" placeholder="XXXX"
+            style="width:100%;background:var(--surface2);border:1px solid var(--gold);border-radius:3px;padding:12px;color:var(--gold-light);font-family:'Cinzel Decorative',serif;font-size:28px;letter-spacing:8px;outline:none;text-align:center;text-transform:uppercase;" />
+    </div>
+
+    <button class="btn btn-play" id="lobby-confirm-btn" onclick="confirmLobby()" style="width:100%;max-width:340px">
+        Crear Sala →
+    </button>
+    <button class="btn" onclick="showScreen('duel')" style="color:var(--text-dim);font-size:10px">← Volver</button>
+</div>
+
+<!-- ======== SCREEN: DUEL WAIT ======== -->
+<div id="screen-duel-wait" class="screen">
+    <div style="font-size:48px" id="wait-emoji">⚔️</div>
+    <div class="modal-title" id="wait-title">Sala Creada</div>
+    <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:var(--aged)">CÓDIGO DE SALA</div>
+    <div class="sala-code-display" id="wait-sala-code">XXXX</div>
+    <button class="btn" onclick="copySalaCode()" style="border-color:var(--gold);color:var(--gold);font-size:11px">📋 Copiar código</button>
+    <div id="wait-status" style="font-family:'IM Fell English',serif;font-style:italic;font-size:14px;color:var(--text-muted);text-align:center;line-height:1.8">
+        Comparte este código con tu rival.<br>Esperando que se una...
+    </div>
+    <div id="wait-opponent" style="display:none;font-family:'Cinzel',serif;font-size:13px;color:var(--green);letter-spacing:2px"></div>
+    <button class="btn" onclick="abandonDuel()" style="color:var(--text-dim);font-size:10px;margin-top:12px">← Cancelar</button>
+</div>
+
+<!-- ======== SCREEN: DUEL GAME ======== -->
+<div id="screen-duel-game" class="screen">
+    <!-- Barra de duelo sticky -->
+    <div class="duel-bar-container" style="width:100%;max-width:100%">
+        <div class="duel-bar-labels">
+            <span class="duel-name-blue" id="duel-label-blue">🔵 Nigromante</span>
+            <span class="duel-timer" id="duel-timer">3:00</span>
+            <span class="duel-name-red" id="duel-label-red">Bibliotecario 🔴</span>
+        </div>
+        <div class="duel-bar-track">
+            <div class="duel-bar-fill-blue" id="duel-fill-blue"></div>
+            <div class="duel-bar-fill-red"  id="duel-fill-red"></div>
+            <div class="duel-bar-center"></div>
+            <div class="duel-bar-milestone" style="left:25%"></div>
+            <div class="duel-bar-milestone" style="left:75%"></div>
+            <div class="duel-bar-value" id="duel-bar-value">0</div>
+        </div>
+    </div>
+
+    <!-- Zona de juego (reutilizamos estructura del modo historia) -->
+    <div class="game-body" id="duel-game-body">
+        <!-- Word area -->
+        <div class="word-area" id="duel-word-area">
+            <div class="word-display" id="duel-word-display"></div>
+            <div class="word-score-preview" id="duel-score-preview"></div>
+            <div class="feedback" id="duel-feedback">escribe tu encantamiento...</div>
+            <div class="word-actions">
+                <button class="btn btn-play" onclick="duelPlayWord()">⚡ Lanzar</button>
+                <button class="btn btn-clear" onclick="duelClearWord()">Limpiar</button>
+            </div>
+        </div>
+
+        <!-- Hand -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;width:100%">
+            <div class="hand-label">Tu mano</div>
+            <div class="hand" id="duel-hand"></div>
+            <div class="discard-hint" id="duel-discard-hint">SELECCIONA LETRAS A DESCARTAR</div>
+            <div class="hand-controls">
+                <button class="btn btn-hand" onclick="duelShuffle()">⟳ Revolver</button>
+                <button class="btn btn-discard-mode" id="duel-discard-btn" onclick="duelToggleDiscard()">✕ Descartar</button>
+                <span class="counter-badge" id="duel-discard-count"></span>
+            </div>
+        </div>
+
+        <!-- Buff bar -->
+        <div id="duel-buff-bar" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;width:100%"></div>
+
+        <!-- Log compartido -->
+        <div class="log" id="duel-log" style="max-height:160px"></div>
+    </div>
+</div>
+
+<!-- ======== MODAL: DUEL CARD ======== -->
+<div class="modal-overlay" id="modal-duel-card">
+    <div class="modal" style="max-width:420px;gap:18px">
+        <div style="font-size:32px" id="duel-card-milestone-emoji">⚔️</div>
+        <div class="modal-title" id="duel-card-title" style="font-size:18px">¡Punto de Poder!</div>
+        <div style="font-family:'IM Fell English',serif;font-style:italic;font-size:13px;color:var(--text-muted);text-align:center" id="duel-card-subtitle">Elige tu ventaja</div>
+        <div class="duel-cards" id="duel-card-options"></div>
+    </div>
+</div>
+
+<!-- ======== MODAL: DUEL RESULT ======== -->
+<div class="modal-overlay" id="modal-duel-result">
+    <div class="modal" style="max-width:420px;gap:16px">
+        <div style="font-size:48px" id="duel-result-emoji">⚔️</div>
+        <div class="modal-title" id="duel-result-title">Duelo Finalizado</div>
+        <div class="modal-sub" id="duel-result-sub"></div>
+        <div class="result-stats" id="duel-result-stats"></div>
+        <button class="btn" id="share-btn-duel" onclick="shareDuelResult()" class="btn u-gold-btn">📜 Compartir resultado</button>
+        <button class="btn btn-play" onclick="resetGame()" style="width:100%">Volver al menú</button>
+    </div>
+</div>
+
+<!-- ======== GAME SCREEN ======== -->
+<div id="screen-game" class="screen">
+
+    <!-- HUD -->
+    <div class="hud">
+        <!-- Fila 1: stats -->
+        <div class="hud-top">
+            <div class="hud-section">
+                <div class="hud-label">Poder</div>
+                <div class="hud-value red" id="hud-score">0</div>
+            </div>
+            <div class="hud-section">
+                <div class="hud-label" id="hud-mana-label">Maná</div>
+                <div class="hud-value blue" id="hud-attempts">5</div>
+            </div>
+            <div class="hud-section">
+                <div class="hud-label">Esencia</div>
+                <div class="hud-value" id="hud-coins">0</div>
+            </div>
+            <button class="btn-exit-hud" onclick="showExitModal()" title="Salir">✕</button>
+        </div>
+        <!-- Fila 2: barra de progreso -->
+        <div class="hud-bottom">
+            <div class="hud-progress-labels">
+                <span id="hud-round">Nivel 1 · Ronda 1/3</span>
+                <span><span id="hud-prog-cur">0</span> / <span id="hud-prog-goal">50</span> pts</span>
+            </div>
+            <div class="progress-bar-outer">
+                <div class="progress-bar-inner" id="hud-bar" style="width:0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME BODY -->
+    <div class="game-body">
+
+        <!-- BOSS ROW: indicator + curses in one line -->
+        <div id="boss-row" style="display:none;width:100%;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
+            <div class="boss-indicator" id="boss-indicator">📖 GUARDIÁN DEL TOMO</div>
+            <div id="curse-bar" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+
+        <!-- BUFF BAR -->
+        <div id="buff-bar" style="display:none;flex-wrap:wrap;gap:6px;width:100%;justify-content:center;"></div>
+
+        <!-- WORD AREA -->
+        <div class="word-area">
+            <div class="word-display" id="word-display">
+                <div class="word-placeholder" style="font-family:'IM Fell English',serif;font-style:italic;font-size:14px;color:var(--text-dim);letter-spacing:2px">escribe tu encantamiento...</div>
+            </div>
+            <div class="word-score-preview" id="word-score-preview"></div>
+            <div class="feedback" id="feedback"></div>
+            <div class="word-actions">
+                <button class="btn btn-clear" id="btn-clear" onclick="clearWord()" disabled>Limpiar</button>
+                <button class="btn btn-play" id="btn-play" onclick="playWord()" disabled>Jugar</button>
+            </div>
+        </div>
+
+        <!-- HAND -->
+        <div class="hand-section">
+            <div class="hand-label">Tu mano</div>
+            <div class="hand" id="hand"></div>
+            <div class="discard-hint" id="discard-hint">SELECCIONA LETRAS A DESCARTAR</div>
+            <div class="discard-hint cincel-hint" id="cincel-hint">🔨 SELECCIONA LA LETRA A SUSTITUIR</div>
+            <div class="hand-controls">
+                <button class="btn btn-hand" onclick="shuffleHand()">⟳ Revolver</button>
+                <button id="btn-cincel" class="btn btn-cincel" onclick="toggleCincelMode()" style="display:none">🔨 Cincel</button>
+                <button class="btn btn-discard-mode" id="btn-discard" onclick="toggleDiscardMode()">✕ Descartar</button>
+                <span class="counter-badge" id="discard-count"></span>
+            </div>
+            <div class="bag-info" id="bag-info"></div>
+            <button id="btn-surrender" onclick="surrenderDaily()" style="display:none;margin-top:6px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:var(--text-dim);border:1px solid var(--border);background:none;padding:6px 16px;border-radius:3px;cursor:pointer;opacity:0.6">☠ Rendirse</button>
+        </div>
+
+        <!-- LOG -->
+        <div class="log" id="log"></div>
+
+    </div>
+</div>
+
+<!-- ======== MODAL: ROUND WIN ======== -->
+<div class="modal-overlay" id="modal-round-win">
+    <div class="modal">
+        <div class="big-emoji">✨</div>
+        <div class="modal-title" id="rw-title">¡Ronda Superada!</div>
+        <div class="modal-sub" id="rw-sub">Has alcanzado el objetivo</div>
+        <div class="modal-stat"><div class="modal-stat-label">Puntos:</div><div class="modal-stat-val" id="rw-score">0</div></div>
+
+        <div id="rw-coins" class="coin-breakdown"></div>
+        <button class="btn btn-play" onclick="goToShop()" style="margin-top:8px">Visitar Sanctum →</button>
+    </div>
+</div>
+
+<!-- ======== MODAL: SHOP ======== -->
+<div class="modal-overlay" id="modal-shop">
+    <div class="modal">
+        <div class="modal-title">✦ Sanctum de Hechizos</div>
+        <div class="modal-sub" id="shop-sub">Siguiente: Nivel 1 · Ronda 2</div>
+        <div style="display:flex;gap:8px;align-items:center">
+            <div class="modal-stat-label">Tus monedas:</div>
+            <div class="coins-display" id="shop-coins">0 🪙</div>
+        </div>
+        <div class="shop-grid" id="shop-grid"></div>
+        <button class="btn btn-play" id="shop-continue-btn" onclick="shopContinue()">Continuar →</button>
+    </div>
+</div>
+
+<!-- ======== MODAL: LORE PRE-RONDA ======== -->
+<div class="modal-overlay" id="modal-lore">
+    <div class="modal" style="max-width:420px;gap:20px">
+        <div class="modal-sub" id="lore-tomo-label" style="letter-spacing:4px"></div>
+        <div id="lore-text" style="font-family:'IM Fell English',serif;font-size:15px;line-height:1.9;color:var(--text-muted);text-align:center;font-style:italic"></div>
+        <div style="width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)"></div>
+        <div style="font-family:'Cinzel',serif;font-size:9px;color:var(--aged);letter-spacing:3px;text-align:center;text-transform:uppercase">Objetivo: <span id="lore-goal" style="color:var(--gold)"></span> pts</div>
+        <button class="btn btn-play" onclick="startLoreRound()" style="width:100%">Comenzar a maldecir →</button>
+    </div>
+</div>
+
+<!-- ======== MODAL: SECRET WORD BONUS ======== -->
+<div class="modal-overlay" id="modal-secret">
+    <div class="modal" style="max-width:380px;text-align:center;gap:16px">
+        <div style="font-size:40px">📖</div>
+        <div class="modal-title" style="color:var(--gold)">¡Palabra del Grimorio!</div>
+        <div style="font-family:'IM Fell English',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.7" id="secret-reveal-text"></div>
+        <div style="font-family:'Cinzel Decorative',serif;font-size:24px;color:var(--gold-light);letter-spacing:4px" id="secret-bonus-pts"></div>
+        <button class="btn btn-play" onclick="closeSecretModal()" style="width:100%">Continuar →</button>
+    </div>
+</div>
+
+<!-- ======== MODAL: BOSS INTRO ======== -->
+<div class="modal-overlay" id="modal-boss-intro">
+    <div class="modal">
+        <div class="big-emoji">⚔️</div>
+        <div class="modal-title">☠ El Guardián Despierta</div>
+        <div class="modal-sub" id="boss-intro-level">Nivel 1 · Objetivo: 50 pts</div>
+        <div style="width:100%">
+            <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:4px;color:var(--aged);margin-bottom:12px;text-transform:uppercase">Encantamientos del Guardián</div>
+            <div id="boss-curse-list" style="display:flex;flex-direction:column;gap:10px;width:100%"></div>
+        </div>
+        <button class="btn btn-play" onclick="startBossFight()" style="margin-top:8px;background:var(--red);border-color:var(--red)">Enfrentarse al Guardián</button>
+    </div>
+</div>
+
+<!-- ======== MODAL: GAME OVER ======== -->
+<!-- ======== MODAL: EXIT ======== -->
+<div class="modal-overlay" id="modal-exit">
+    <div class="modal">
+        <div class="modal-title">Pausar</div>
+        <div class="modal-sub">¿Qué quieres hacer?</div>
+        <div style="width:100%;display:flex;flex-direction:column;gap:10px;">
+            <button class="btn btn-play" onclick="hideAllModals()">↩ Volver a la partida</button>
+            <button id="btn-save-firebase" class="btn" style="border-color:var(--gold);color:var(--gold)" onclick="saveToFirebase()">💾 Guardar partida</button>
+            <button class="btn" style="border-color:var(--red);color:var(--red)" onclick="confirmSurrender()">🏳 Abandonar el Ritual</button>
+        </div>
+        <div id="save-seed-area" style="display:none;width:100%;text-align:center">
+            <div style="font-family:'Cinzel',serif;font-size:9px;color:var(--aged);letter-spacing:3px;margin-bottom:8px;text-transform:uppercase">TU CÓDIGO DE PARTIDA</div>
+            <div id="seed-display" style="font-family:'Cinzel Decorative',serif;font-size:30px;font-weight:900;color:var(--gold-light);background:var(--surface2);border:1px solid var(--gold);border-radius:4px;padding:16px;letter-spacing:8px;text-shadow:0 0 20px rgba(200,146,42,0.4)"></div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:8px">Introdúcelo en el menú principal para continuar donde lo dejaste.</div>
+            <button class="btn" style="margin-top:10px;font-size:12px" onclick="copySeed()">📋 Copiar código</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-gameover">
+    <div class="modal">
+        <div class="big-emoji">💀</div>
+        <div class="modal-title">Derrota</div>
+        <div class="modal-sub">Se acabaron los intentos</div>
+        <div class="result-stats" id="gameover-stats"></div>
+        <button class="btn btn-play" onclick="resetGame()">Volver a intentarlo</button>
+        <button class="btn" id="share-btn-gameover" onclick="shareResult('gameover')"
+            class="btn u-gold-btn">
+            📜 Compartir resultado
+        </button>
+    </div>
+</div>
+
+<!-- ======== MODAL: VICTORY ======== -->
+<div class="modal-overlay" id="modal-victory">
+    <div class="modal">
+        <div class="big-emoji">🏆</div>
+        <div class="modal-title">¡Victoria!</div>
+        <div class="modal-sub">Has completado todos los Tomos</div>
+        <div class="result-stats" id="victory-stats"></div>
+        <button class="btn btn-play" onclick="resetGame()">Jugar de nuevo</button>
+        <button class="btn" id="share-btn-victory" onclick="shareResult('victory')"
+            class="btn u-gold-btn">
+            📜 Compartir resultado
+        </button>
+    </div>
+</div>
+
+
+<!-- ======== MODAL: DAILY NAME ======== -->
+<div class="modal-overlay" id="modal-daily-name">
+    <div class="modal" style="max-width:400px;gap:20px">
+        <div style="font-size:36px">☠</div>
+        <div class="modal-title" style="color:#e8b08a">Modo Diario</div>
+        <div class="modal-sub" id="daily-date-label"></div>
+        <div style="font-family:'IM Fell English',serif;font-style:italic;font-size:14px;color:var(--text-muted);text-align:center;line-height:1.7">
+            Todos los nigromantes reciben las mismas letras y hechizos.<br>
+            ¿Quién acumulará más poder?
+        </div>
+        <input id="daily-name-input" type="text" maxlength="20" placeholder="Tu nombre de nigromante..."
+            style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:12px 14px;color:var(--text);font-family:'Cinzel',serif;font-size:13px;letter-spacing:2px;outline:none;text-align:center;" />
+        <button class="btn btn-play" onclick="startDailyMode()" style="width:100%;border-color:var(--red);color:#e8b08a">
+            ☠ Comenzar
+        </button>
+        <button class="btn" onclick="hideAllModals()" style="width:100%;font-size:10px;color:var(--text-dim)">Cancelar</button>
+    </div>
+</div>
+
+<!-- ======== MODAL: DAILY GAMEOVER ======== -->
+<div class="modal-overlay" id="modal-daily-over">
+    <div class="modal" style="max-width:440px;gap:16px">
+        <div style="font-size:36px" id="daily-over-emoji">📜</div>
+        <div class="modal-title" id="daily-over-title" style="color:#e8b08a">El Ritual Concluye</div>
+        <div class="modal-sub" id="daily-over-sub"></div>
+        <div class="result-stats" id="daily-over-stats"></div>
+        <div id="daily-rank-box" style="width:100%;background:rgba(200,100,50,0.08);border:1px solid rgba(200,100,50,0.25);border-radius:4px;padding:14px;text-align:center;display:none">
+            <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:var(--aged);margin-bottom:8px">TU POSICIÓN HOY</div>
+            <div id="daily-rank-value" style="font-family:'Cinzel Decorative',serif;font-size:28px;color:#e8b84b"></div>
+        </div>
+        <button class="btn" id="share-btn-daily" onclick="shareDailyResult()"
+            style="width:100%;border-color:#e8b08a;color:#e8b08a">
+            📜 Compartir resultado
+        </button>
+        <button class="btn" onclick="showDailyLeaderboard()" class="btn u-gold-btn">
+            🏆 Ver clasificación
+        </button>
+        <button class="btn" onclick="resetGame()" style="width:100%;font-size:10px;color:var(--text-dim)">Volver al menú</button>
+    </div>
+</div>
+
+<!-- ======== MODAL: DAILY LEADERBOARD ======== -->
+<div class="modal-overlay" id="modal-daily-board">
+    <div class="modal" style="max-width:440px;gap:14px">
+        <div class="modal-title" style="color:#e8b08a">☠ Clasificación del Día</div>
+        <div class="modal-sub" id="board-date-label"></div>
+        <div id="board-list" style="width:100%;display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow-y:auto"></div>
+        <button class="btn" onclick="hideModal('daily-board')" style="width:100%;font-size:10px;color:var(--text-dim)">Cerrar</button>
+    </div>
+</div>
+
+<!-- ======== LETTER PICKER (comodín) ======== -->
+<div id="letter-picker">
+    <div class="picker-box">
+        <div class="picker-title" id="picker-title">✦ Elige una letra para el comodín</div>
+        <div class="picker-grid" id="picker-grid"></div>
+        <button class="picker-cancel" onclick="closePicker()">Cancelar</button>
+    </div>
+</div>
+
+<script>
+// ============================================================
+//  CONFIGURACIÓN
+// ============================================================
+const CONFIG = {
+    HAND_SIZE: 7,
+    BAG_SIZE: 100,
+    MAX_ROUNDS: 3,
+    MAX_LEVELS: 3,
+    BASE_JUGADAS: 5,
+    BASE_DISCARDS: 4,
+    MAX_HAND: 12,
+    MAX_JUGADAS: 8,
+    MAX_DISCARDS: 8,
+    roundGoal: (level, round, isBoss) => {
+        // Con nuevo sistema: palabra 4 letras ~17pts, 5 letras ~26pts, 6 letras ~37pts
+        // 5 jugadas por ronda → potencial ~85-185 pts por ronda
+        const goals = [
+            [ 30,  50,  70, 110],   // nivel 1
+            [ 90, 130, 180, 260],   // nivel 2 (empieza < jefe nv1)
+            [220, 300, 390, 550],   // nivel 3 (empieza < jefe nv2)
+        ];
+        const lvl = goals[Math.min(level - 1, goals.length - 1)];
+        return isBoss ? lvl[3] : lvl[Math.min(round - 1, 2)];
+    },
+};
+
+// ============================================================
+//  LETRAS
+// ============================================================
+const LETTER_POOL = [
+    ...Array(12).fill('A'), ...Array(12).fill('E'), ...Array(9).fill('O'),
+    ...Array(6).fill('I'),  ...Array(6).fill('U'),
+    ...Array(6).fill('S'),  ...Array(5).fill('N'), ...Array(5).fill('R'),
+    ...Array(5).fill('L'),  ...Array(4).fill('T'), ...Array(4).fill('D'),
+    ...Array(3).fill('C'),  ...Array(3).fill('M'), ...Array(3).fill('P'),
+    ...Array(2).fill('B'),  ...Array(2).fill('G'), ...Array(2).fill('V'),
+    ...Array(2).fill('F'),  ...Array(2).fill('H'), ...Array(2).fill('Y'),
+    ...Array(1).fill('J'),  ...Array(2).fill('Ñ'), ...Array(1).fill('Q'),
+    ...Array(1).fill('X'),  ...Array(1).fill('Z'), ...Array(1).fill('W'),
+    ...Array(1).fill('K'),  ...Array(3).fill('*'),
+];
+
+const LETTER_VALUES = {
+    A:1,E:1,O:1,I:1,U:1,S:1,N:1,R:1,L:1,T:1,
+    D:2,G:2, B:3,C:3,M:3,P:3, F:4,H:4,V:4,Y:4,
+    J:6,Ñ:6,X:6, K:8,W:8,Z:8, Q:10
+};
+
+const ALL_LETTERS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','Ñ','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+const VOWELS = new Set(['A','E','I','O','U']);
+
+// ============================================================
+//  MEJORAS DE TIENDA
+// ============================================================
+const SHOP_ITEMS = [
+    // --- COMUNES (weight 4) ---
+    {
+        id: 'bag_extra', name: 'Bolsa Extra', emoji: '🎒',
+        desc: 'Añade 30 letras permanentes a tu bolsa. Se mantienen toda la partida.',
+        price: 3, weight: 4,
+        canBuy: gs => true,
+        apply: gs => {
+            const extra = shuffleArr([...LETTER_POOL]).slice(0, 30);
+            gs.extraBagLetters.push(...extra);
+            gs.bag.push(...extra);
+        }
+    },
+    {
+        id: 'recycle_extra', name: 'Reciclaje Extra', emoji: '♻️',
+        desc: '+1 descarte permanente. Máximo 5 descartes en total.',
+        price: 2, weight: 4,
+        canBuy: gs => gs.upgrades.extraDiscards < 4,
+        apply: gs => gs.upgrades.extraDiscards++
+    },
+    {
+        id: 'round_extra', name: 'Ronda Extra', emoji: '🃏',
+        desc: '+1 jugada durante este nivel (hasta vencer al jefe). Máximo 8.',
+        price: 2, weight: 4,
+        canBuy: gs => gs.levelBonuses.extraJugadas < 3,
+        apply: gs => gs.levelBonuses.extraJugadas++
+    },
+    // --- POCO COMUNES (weight 3) ---
+    {
+        id: 'hand_large', name: 'Mano Grande', emoji: '✋',
+        desc: '+1 letra en mano permanentemente para toda la partida. Acumulable hasta 5 veces.',
+        price: 4, weight: 3,
+        canBuy: gs => gs.upgrades.handBonus < 5,
+        apply: gs => gs.upgrades.handBonus++
+    },
+    {
+        id: 'eco_discard', name: 'Economía de Descarte', emoji: '💎',
+        desc: 'Los descartes sin usar generan +1🪙 cada uno al final de ronda.',
+        price: 3, weight: 3,
+        canBuy: gs => !gs.upgrades.discardEconomy,
+        apply: gs => gs.upgrades.discardEconomy = true
+    },
+    {
+        id: 'eco_play', name: 'Economía de Jugadas', emoji: '💎',
+        desc: 'El maná sin usar vale el doble de esencia al final de página.',
+        price: 3, weight: 3,
+        canBuy: gs => !gs.upgrades.playEconomy,
+        apply: gs => gs.upgrades.playEconomy = true
+    },
+    {
+        id: 'pos1', name: 'Posición [1] ×2', emoji: '[1]',
+        desc: 'La letra en la 1ª posición de la palabra vale el doble.',
+        price: 3, weight: 3,
+        canBuy: gs => !gs.upgrades.posDouble.includes(0),
+        apply: gs => gs.upgrades.posDouble.push(0)
+    },
+    {
+        id: 'pos2', name: 'Posición [2] ×2', emoji: '[2]',
+        desc: 'La letra en la 2ª posición de la palabra vale el doble.',
+        price: 3, weight: 3,
+        canBuy: gs => !gs.upgrades.posDouble.includes(1),
+        apply: gs => gs.upgrades.posDouble.push(1)
+    },
+    {
+        id: 'pos3', name: 'Posición [3] ×2', emoji: '[3]',
+        desc: 'La letra en la 3ª posición de la palabra vale el doble.',
+        price: 3, weight: 3,
+        canBuy: gs => !gs.upgrades.posDouble.includes(2),
+        apply: gs => gs.upgrades.posDouble.push(2)
+    },
+    {
+        id: 'pos4', name: 'Posición [4] ×2', emoji: '[4]',
+        desc: 'La letra en la 4ª posición de la palabra vale el doble.',
+        price: 3, weight: 3,
+        canBuy: gs => !gs.upgrades.posDouble.includes(3),
+        apply: gs => gs.upgrades.posDouble.push(3)
+    },
+    {
+        id: 'pos5', name: 'Posición [5] ×2', emoji: '[5]',
+        desc: 'La letra en la 5ª posición de la palabra vale el doble.',
+        price: 3, weight: 3,
+        canBuy: gs => !gs.upgrades.posDouble.includes(4),
+        apply: gs => gs.upgrades.posDouble.push(4)
+    },
+    {
+        id: 'pos6', name: 'Posición [6] ×2', emoji: '[6]',
+        desc: 'La letra en la 6ª posición de la palabra vale el doble.',
+        price: 3, weight: 3,
+        canBuy: gs => !gs.upgrades.posDouble.includes(5),
+        apply: gs => gs.upgrades.posDouble.push(5)
+    },
+    {
+        id: 'pos7', name: 'Posición [7] ×2', emoji: '[7]',
+        desc: 'La letra en la 7ª posición exacta de la palabra vale el doble.',
+        price: 3, weight: 3,
+        canBuy: gs => !gs.upgrades.posDouble.includes(6),
+        apply: gs => gs.upgrades.posDouble.push(6)
+    },
+    {
+        id: 'free_short', name: 'Diccionario Libre', emoji: '📖',
+        desc: 'Las palabras de 2 letras no gastan jugada.',
+        price: 9, weight: 2,
+        canBuy: gs => !gs.upgrades.freeShortWords,
+        apply: gs => gs.upgrades.freeShortWords = true
+    },
+    {
+        id: 'shop_size', name: 'Tamaño de Tienda', emoji: '🏪',
+        desc: 'La tienda ofrece 4 mejoras en lugar de 3. Permanente.',
+        price: 10, weight: 2,
+        canBuy: gs => !gs.upgrades.shopSize,
+        apply: gs => gs.upgrades.shopSize = true
+    },
+    {
+        id: 'value_boost', name: 'Valor Mejorado', emoji: '⬆️',
+        desc: 'Todas las letras que valían 1 punto ahora valen 2. Permanente.',
+        price: 6, weight: 2,
+        canBuy: gs => !gs.upgrades.valueBoost,
+        apply: gs => gs.upgrades.valueBoost = true
+    },
+    {
+        id: 'cincel', name: 'Cincel', emoji: '🔨',
+        desc: 'Cambia cualquier letra de tu mano por la que elijas. 1 uso.',
+        price: 5, weight: 2,
+        canBuy: gs => true,
+        apply: gs => gs.upgrades.cincelUses++
+    },
+    {
+        id: 'letter_day', name: 'Letra del Día', emoji: '⭐',
+        desc: 'Una letra aleatoria vale ×3 durante este nivel. Acumulable.',
+        price: 5, weight: 2,
+        canBuy: gs => gs.levelBonuses.letterOfDay.length < ALL_LETTERS.length,
+        apply: gs => {
+            const used = gs.levelBonuses.letterOfDay.map(l => l.letter);
+            const avail = ALL_LETTERS.filter(l => !used.includes(l));
+            if (avail.length > 0) {
+                const letter = avail[Math.floor(Math.random() * avail.length)];
+                gs.levelBonuses.letterOfDay.push({ letter, mult: 3 });
+            }
+        }
+    },
+    {
+        id: 'pos123', name: 'Posición [1][2][3] ×2', emoji: '🎯',
+        desc: 'Las letras en las posiciones 1, 2 y 3 valen el doble.',
+        price: 8, weight: 2,
+        canBuy: gs => ![0,1,2].every(p => gs.upgrades.posDouble.includes(p)),
+        apply: gs => { [0,1,2].forEach(p => { if (!gs.upgrades.posDouble.includes(p)) gs.upgrades.posDouble.push(p); }); }
+    },
+    {
+        id: 'pos456', name: 'Posición [4][5][6] ×2', emoji: '🎯',
+        desc: 'Las letras en las posiciones 4, 5 y 6 valen el doble.',
+        price: 8, weight: 2,
+        canBuy: gs => ![3,4,5].every(p => gs.upgrades.posDouble.includes(p)),
+        apply: gs => { [3,4,5].forEach(p => { if (!gs.upgrades.posDouble.includes(p)) gs.upgrades.posDouble.push(p); }); }
+    },
+    {
+        id: 'pos7etc', name: 'Posición [7+] ×2', emoji: '🎯',
+        desc: 'Todas las letras en posición 7 o más valen el doble.',
+        price: 6, weight: 2,
+        canBuy: gs => !gs.upgrades.posFrom7,
+        apply: gs => gs.upgrades.posFrom7 = true
+    },
+];
+
+// ============================================================
+//  MALDICIONES DE JEFES
+// ============================================================
+// weight: [nivel1, nivel2, nivel3] — 0 = nunca aparece
+const BOSS_CURSES = [
+    {
+        id: 'short_cursed',
+        name: 'Palabras Cortas Malditas',
+        emoji: '💀',
+        desc: 'Las palabras de 4 letras o menos no dan puntos.',
+        weight: [4, 3, 2],
+        apply: gs => gs.curses.shortWordsCursed = true
+    },
+    {
+        id: 'vowels_cursed',
+        name: 'Vocales Malditas',
+        emoji: '🔇',
+        desc: 'Las vocales puntúan 0 durante este combate.',
+        weight: [2, 3, 4],
+        apply: gs => gs.curses.vocalsCursed = true
+    },
+    {
+        id: 'odd_cursed',
+        name: 'Impares Malditas',
+        emoji: '🔮',
+        desc: 'Las palabras con número impar de letras no puntúan.',
+        weight: [3, 3, 3],
+        apply: gs => gs.curses.oddCursed = true
+    },
+    {
+        id: 'even_cursed',
+        name: 'Pares Malditas',
+        emoji: '🔮',
+        desc: 'Las palabras con número par de letras no puntúan.',
+        weight: [3, 3, 3],
+        apply: gs => gs.curses.evenCursed = true
+    },
+    {
+        id: 'letters_cursed',
+        name: 'Letras Malditas',
+        emoji: '☠️',
+        desc: '2 letras aleatorias de tu mano puntúan 0.',
+        weight: [4, 4, 3],
+        apply: gs => {
+            const letters = gs.hand.filter(t => t.letter && t.letter !== '*').map(t => t.letter);
+            const unique = [...new Set(letters)];
+            const shuffled = shuffleArr(unique);
+            gs.curses.cursedLetters = shuffled.slice(0, 2);
+        }
+    },
+    {
+        id: 'only_short',
+        name: 'Palabras Cortas',
+        emoji: '✂️',
+        desc: 'Solo cuentan palabras de 4 letras o menos.',
+        weight: [3, 1, 0],
+        apply: gs => gs.curses.onlyShort = true
+    },
+    {
+        id: 'no_discards',
+        name: 'Sin Descartes',
+        emoji: '🚫',
+        desc: 'No puedes descartar letras durante este combate.',
+        weight: [4, 3, 2],
+        apply: gs => gs.curses.noDiscards = true
+    },
+    {
+        id: 'burned_hand',
+        name: 'Mano Quemada',
+        emoji: '🔥',
+        desc: '2 letras en tu mano están quemadas y puntúan 0. Cambian tras cada palabra válida.',
+        weight: [3, 4, 4],
+        apply: gs => refreshBurnedTiles(gs)
+    },
+];
+
+// ============================================================
+//  COMODÍN — PICKER
+// ============================================================
+let cincelMode = false;
+
+// ── DRAG-TO-REORDER TILES ─────────────────────────────────────
+let dragSrcIdx = null;
+let dragSrcHand = null;
+
+function addDragToTile(div, idx, handArr, renderFn) {
+    div.dataset.handIdx = idx;
+    div.draggable = true;
+
+    div.addEventListener('dragstart', e => {
+        dragSrcIdx = idx;
+        dragSrcHand = handArr;
+        e.dataTransfer.effectAllowed = 'move';
+        setTimeout(() => div.classList.add('dragging'), 0);
+    });
+    div.addEventListener('dragend', () => {
+        div.classList.remove('dragging');
+        dragSrcIdx = null; dragSrcHand = null;
+    });
+    div.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        div.classList.add('drag-over');
+    });
+    div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+    div.addEventListener('drop', e => {
+        e.preventDefault();
+        div.classList.remove('drag-over');
+        if (dragSrcIdx === null || dragSrcHand !== handArr || dragSrcIdx === idx) return;
+        [handArr[dragSrcIdx], handArr[idx]] = [handArr[idx], handArr[dragSrcIdx]];
+        dragSrcIdx = null; dragSrcHand = null;
+        renderFn();
+    });
+
+    // Touch support
+    let touchStartX, touchStartY, touchMoved = false;
+    div.addEventListener('touchstart', e => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchMoved = false;
+    }, { passive: true });
+    div.addEventListener('touchmove', e => {
+        const dx = Math.abs(e.touches[0].clientX - touchStartX);
+        const dy = Math.abs(e.touches[0].clientY - touchStartY);
+        if (dx > 8 || dy > 8) {
+            touchMoved = true;
+            dragSrcIdx = idx;
+            dragSrcHand = handArr;
+            div.classList.add('dragging');
+        }
+    }, { passive: true });
+    div.addEventListener('touchend', e => {
+        div.classList.remove('dragging');
+        if (!touchMoved || dragSrcIdx === null) { dragSrcIdx = null; dragSrcHand = null; return; }
+        const touch = e.changedTouches[0];
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        const target = el?.closest('[data-hand-idx]');
+        if (target) {
+            const tIdx = parseInt(target.dataset.handIdx);
+            if (!isNaN(tIdx) && tIdx !== dragSrcIdx && dragSrcHand === handArr) {
+                [handArr[dragSrcIdx], handArr[tIdx]] = [handArr[tIdx], handArr[dragSrcIdx]];
+                renderFn();
+            }
+        }
+        dragSrcIdx = null; dragSrcHand = null;
+    });
+}
+
+function openPicker(tileId, isCincel = false) {
+    const grid = document.getElementById('picker-grid');
+    grid.innerHTML = '';
+    document.getElementById('picker-title').textContent = isCincel
+        ? '🔨 Elige la letra que sustituirá a esta ficha'
+        : '✦ Elige una letra para el comodín';
+    ALL_LETTERS.forEach(letter => {
+        const div = document.createElement('div');
+        div.className = 'picker-letter';
+        div.innerHTML = `${letter}<span class="pl-val">${LETTER_VALUES[letter]||1}</span>`;
+        div.onclick = () => isCincel ? applyCincel(tileId, letter) : chooseLetter(tileId, letter);
+        grid.appendChild(div);
+    });
+    document.getElementById('letter-picker').classList.add('active');
+}
+
+function chooseLetter(tileId, letter) {
+    const tile = gameState.hand.find(t => t.id === tileId);
+    if (tile) tile.chosenLetter = letter;
+    closePicker();
+    if (!gameState.selectedIds.includes(tileId)) gameState.selectedIds.push(tileId);
+    renderWordDisplay();
+    renderHand();
+}
+
+function applyCincel(tileId, letter) {
+    const gs = gameState;
+    const tile = gs.hand.find(t => t.id === tileId);
+    if (tile) {
+        tile.letter = letter;
+        tile.chosenLetter = null;
+    }
+    gs.upgrades.cincelUses--;
+    cincelMode = false;
+    closePicker();
+    addLog(`Cincel usado: → ${letter}`, 'sys');
+    renderAll();
+}
+
+function closePicker() {
+    document.getElementById('letter-picker').classList.remove('active');
+}
+
+function effectiveLetter(tile) {
+    if (tile.letter === '*') return tile.chosenLetter || '*';
+    return tile.letter;
+}
+
+// ============================================================
+//  HELPERS
+// ============================================================
+function shuffleArr(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function weightedRandom(items, weightFn) {
+    const total = items.reduce((s, x) => s + weightFn(x), 0);
+    let r = Math.random() * total;
+    for (const item of items) {
+        r -= weightFn(item);
+        if (r <= 0) return item;
+    }
+    return items[items.length - 1];
+}
+
+// ============================================================
+//  ESTADO DEL JUEGO
+// ============================================================
+let dictionary = new Set();
+let dictLoaded = false;
+let gameState = {};
+
+function freshState() {
+    return {
+        score: 0,
+        coins: 0,
+        level: 1,
+        round: 1,
+        isBoss: false,
+        goal: 0,
+        jugadas: CONFIG.BASE_JUGADAS,
+        jugadasLeft: CONFIG.BASE_JUGADAS,
+        discards: CONFIG.BASE_DISCARDS,
+        discardsLeft: CONFIG.BASE_DISCARDS,
+        bag: [],
+        hand: [],
+        selectedIds: [],
+        discardMode: false,
+        totalWords: 0,
+        totalScore: 0,
+        shopSelection: null,
+        shopBoughtIds: [],
+        shopVisits: 0,
+        extraBagLetters: [],
+        secretWord: null,
+        secretBonus: 0,
+        secretReveal: '',
+        secretFound: false,
+        _saveCode: null,
+        dailyMode: false,
+        // Upgrades permanentes
+        upgrades: {
+            handBonus: 0,
+            valueBoost: false,
+            posDouble: [],
+            posFrom7: false,
+            discardEconomy: false,
+            playEconomy: false,
+            cincelUses: 0,
+            extraDiscards: 0,
+            wordLevels: [0, 0, 0, 0, 0, 0],
+            shopSize: false,
+            freeShortWords: false,
+        },
+        // Bonuses de nivel (se resetean al pasar de nivel)
+        levelBonuses: {
+            letterOfDay: [],
+            extraJugadas: 0,
+        },
+        // Maldiciones (activas solo durante el jefe)
+        curses: {
+            active: [],
+            shortWordsCursed: false,
+            vocalsCursed: false,
+            oddCursed: false,
+            evenCursed: false,
+            cursedLetters: [],
+            onlyShort: false,
+            noDiscards: false,
+            burnedIds: [],
+        },
+    };
+}
+
+// ============================================================
+//  NORMALIZACIÓN
+// ============================================================
+function normalizeWord(word) {
+    return word.toUpperCase()
+        .replace(/Ñ/g, '\x00')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\x00/g, 'Ñ');
+}
+
+// ============================================================
+//  DICCIONARIO
+// ============================================================
+async function loadDictionary() {
+    document.getElementById('load-status').textContent = 'Cargando diccionario...';
+    try {
+        let res = await fetch('Diccionario.txt');
+        if (!res.ok) res = await fetch('diccionario.txt');
+        if (!res.ok) throw new Error('no encontrado');
+        const text = await res.text();
+        const words = text.split(/\r?\n/).map(w => normalizeWord(w.trim())).filter(w => w.length >= 2);
+        dictionary = new Set(words);
+        dictLoaded = true;
+        document.getElementById('load-status').textContent = `✓ ${dictionary.size.toLocaleString()} palabras cargadas`;
+    } catch(e) {
+        const sample = ['CASA','MESA','SILLA','LIBRO','AGUA','FUEGO','TIERRA','AIRE',
+            'SOL','LUNA','MAR','RIO','MONTE','CAMPO','CALLE','CIUDAD',
+            'AMOR','VIDA','TIEMPO','MUNDO','MANO','OJO','CARA','PIE',
+            'GATO','PERRO','PATO','TORO','LOBO','RANA','VACA','PAN',
+            'SAL','VINO','LECHE','CARNE','SOPA','ARROZ','ROJO','AZUL',
+            'VERDE','BLANCO','NEGRO','UNO','DOS','TRES','SEIS','OCHO',
+            'SER','ESTAR','TENER','PODER','HACER','VER','DAR','SALA',
+            'ISLA','PLAYA','LAGO','BOSQUE','VALLE','TREN','MOTO','REY',
+            'REINA','ESPADA','LANZA','ARCO','ORO','PLATA','PIEDRA',
+            'LETRA','PALABRA','JUEGO','RONDA','TURNO','PUNTO','TORRE',
+            'LLAVE','VIENTO','LLUVIA','NIEVE','HIELO','CIELO','LUZ'];
+        dictionary = new Set(sample.map(w => w.toUpperCase()));
+        dictLoaded = true;
+        document.getElementById('load-status').textContent = '⚠ Diccionario de prueba';
+    }
+}
+
+function isValidWord(word) {
+    return word.length >= 2 && dictionary.has(normalizeWord(word));
+}
+
+// ============================================================
+//  CÓDIGO KONAMI — MODO DIOS
+// ============================================================
+const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let konamiIdx = 0;
+let godMode = false;
+
+document.addEventListener('keydown', e => {
+    if (e.key === KONAMI[konamiIdx]) {
+        konamiIdx++;
+        if (konamiIdx === KONAMI.length) { konamiIdx = 0; toggleGodMode(); }
+    } else {
+        konamiIdx = e.key === KONAMI[0] ? 1 : 0;
+    }
+});
+
+function toggleGodMode() {
+    godMode = !godMode;
+    if (godMode) showGodPanel(); else closeGodPanel();
+}
+
+function showGodPanel() {
+    let panel = document.getElementById('god-panel');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'god-panel';
+        panel.style.cssText = `position:fixed;bottom:20px;right:20px;z-index:9999;background:#1a1030;border:2px solid #a78bfa;border-radius:14px;padding:20px;min-width:240px;font-family:'DM Mono',monospace;font-size:12px;box-shadow:0 0 30px rgba(167,139,250,0.4);color:#e0d0ff;`;
+        panel.innerHTML = `<div style="font-size:14px;font-weight:700;color:#a78bfa;margin-bottom:14px;letter-spacing:2px">⚡ MODO DIOS</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <button onclick="godWinRound()" style="${godBtnStyle()}">✓ Ganar ronda</button>
+                <button onclick="godMaxScore()" style="${godBtnStyle()}">★ Puntos máximos</button>
+                <button onclick="godGotoLevel(1)" style="${godBtnStyle()}">① Ir a Tomo 1</button>
+                <button onclick="godGotoLevel(2)" style="${godBtnStyle()}">② Ir a Tomo 2</button>
+                <button onclick="godGotoLevel(3)" style="${godBtnStyle()}">③ Ir a Tomo 3</button>
+                <button onclick="godGotoBoss()" style="${godBtnStyle()}">⚔ Ir al Guardián actual</button>
+                <button onclick="godAddCoins()" style="${godBtnStyle()}">🪙 +20 monedas</button>
+                <button onclick="closeGodPanel()" style="${godBtnStyle('close')}">✕ Cerrar</button>
+            </div>`;
+        document.body.appendChild(panel);
+    } else { panel.style.display = 'block'; }
+}
+function godBtnStyle(type) {
+    const base = 'background:#2a1a4a;border:1px solid #a78bfa;color:#e0d0ff;padding:7px 12px;border-radius:6px;cursor:pointer;font-family:DM Mono,monospace;font-size:11px;letter-spacing:1px;transition:all 0.15s;width:100%;text-align:left;';
+    return type === 'close' ? base + 'border-color:#f07070;color:#f07070;' : base;
+}
+function closeGodPanel() { godMode = false; const p = document.getElementById('god-panel'); if (p) p.style.display = 'none'; }
+function godWinRound() { if (document.getElementById('screen-game').classList.contains('active')) { gameState.score = gameState.goal; renderHUD(); setTimeout(roundWin, 200); } }
+function godMaxScore() { if (document.getElementById('screen-game').classList.contains('active')) { gameState.score = gameState.goal * 2; renderHUD(); addLog('⚡ GOD MODE: puntos máximos', 'sys'); } }
+function godGotoLevel(lvl) { hideAllModals(); gameState.level = lvl; gameState.round = 1; gameState.isBoss = false; gameState.bag = []; gameState.coins = 10; gameState.levelBonuses = { letterOfDay: [], extraJugadas: 0 }; initRound(); showScreen('game'); addLog(`⚡ GOD MODE: Nivel ${lvl}`, 'sys'); }
+function godGotoBoss() { hideAllModals(); gameState.round = CONFIG.MAX_ROUNDS + 1; gameState.isBoss = true; gameState.bag = gameState.bag.length < 20 ? buildBag() : gameState.bag; initRound(); showScreen('game'); addLog('⚡ GOD MODE: Ronda Jefe', 'sys'); }
+function godAddCoins() { gameState.coins += 20; renderHUD(); const el = document.getElementById('shop-coins'); if (el) el.textContent = `${gameState.coins} 🪙`; addLog('⚡ GOD MODE: +20 monedas', 'sys'); }
+
+// ============================================================
+//  INICIO / RESET
+// ============================================================
+async function startGame() {
+    const sb = document.getElementById('btn-surrender'); if (sb) sb.style.display = 'none';
+    if (!dictLoaded) await loadDictionary();
+    gameState = freshState();
+    initRound();
+    showScreen('game');
+}
+
+async function tryLoadSeed() {
+    const code = document.getElementById('seed-input').value.trim();
+    if (!code) return;
+    if (!dictLoaded) await loadDictionary();
+
+    const statusEl = document.getElementById('load-status');
+    statusEl.style.color = 'var(--text-dim)';
+    statusEl.textContent = 'Buscando partida...';
+
+    const result = await loadFromFirebase(code);
+    if (result.ok) {
+        initRound();
+        showScreen('game');
+        addLog('⚡ Partida cargada', 'sys');
+    } else {
+        statusEl.style.color = 'var(--red)';
+        statusEl.textContent = `⚠ ${result.msg}`;
+    }
+}
+
+function shareResult(type) {
+    const gs = gameState;
+    const isVictory = type === 'victory';
+
+    // Barra de progreso con emojis
+    const maxTomos = 3;
+    const tomosDone = isVictory ? maxTomos : gs.level - 1;
+    const tomoBar = '📖'.repeat(tomosDone) + '💀'.repeat(Math.max(0, maxTomos - tomosDone));
+
+    // Estrellas según poder acumulado
+    const stars = gs.totalScore >= 2000 ? '⭐⭐⭐' :
+                  gs.totalScore >= 1000 ? '⭐⭐' : '⭐';
+
+    const header = isVictory
+        ? `🏆 ¡El Diablo ha Resucitado!`
+        : `💀 El Ritual ha Fracasado`;
+
+    const tomoLabel = isVictory
+        ? `Todos los Tomos Profanados`
+        : `Caído en el Tomo ${gs.level}, Página ${gs.round}`;
+
+    const txt = [
+        `📜 LETRARIO`,
+        ``,
+        header,
+        ``,
+        `${tomoBar} ${stars}`,
+        ``,
+        `🩸 Poder acumulado:  ${gs.totalScore} pts`,
+        `✒️  Palabras malditas: ${gs.totalWords}`,
+        `📖 ${tomoLabel}`,
+        ``,
+        `¿Puedes completar el ritual?`,
+        `👉 https://bit.ly/letrario`,
+    ].join('\n');
+
+    const btnId = `share-btn-${type}`;
+    const btn = document.getElementById(btnId);
+
+    navigator.clipboard.writeText(txt).then(() => {
+        btn.textContent = '✓ ¡Copiado!';
+        btn.style.borderColor = 'var(--green)';
+        btn.style.color = 'var(--green)';
+        setTimeout(() => {
+            btn.textContent = '📜 Compartir resultado';
+            btn.style.borderColor = 'var(--gold)';
+            btn.style.color = 'var(--gold)';
+        }, 2500);
+    }).catch(() => {
+        // Fallback para navegadores sin clipboard API
+        const ta = document.createElement('textarea');
+        ta.value = txt;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = '✓ ¡Copiado!';
+        setTimeout(() => btn.textContent = '📜 Compartir resultado', 2500);
+    });
+}
+
+function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+}
+
+// ============================================================
+//  BOLSA & MANO
+// ============================================================
+function buildBag() {
+    return shuffleArr([...LETTER_POOL]).slice(0, CONFIG.BAG_SIZE);
+}
+
+function drawFromBag(n) {
+    const drawn = [];
+    for (let i = 0; i < n && gameState.bag.length > 0; i++) drawn.push(gameState.bag.pop());
+    return drawn;
+}
+
+function fillHand() {
+    const gs = gameState;
+    const empty = gs.hand.filter(t => t.letter === null).length;
+    const drawn = drawFromBag(Math.min(empty, gs.bag.length));
+    let di = 0;
+    for (let i = 0; i < gs.hand.length && di < drawn.length; i++) {
+        if (gs.hand[i].letter === null) gs.hand[i].letter = drawn[di++];
+    }
+}
+
+let tileIdCounter = 0;
+function makeTile(letter) { return { id: tileIdCounter++, letter, chosenLetter: null }; }
+
+// ============================================================
+//  MALDICIONES
+// ============================================================
+function refreshBurnedTiles(gs) {
+    const available = gs.hand.filter(t => t.letter && t.letter !== '*');
+    const shuffled = shuffleArr(available);
+    gs.curses.burnedIds = shuffled.slice(0, 2).map(t => t.id);
+}
+
+function clearCurses(gs) {
+    gs.curses = {
+        active: [],
+        shortWordsCursed: false,
+        vocalsCursed: false,
+        oddCursed: false,
+        evenCursed: false,
+        cursedLetters: [],
+        onlyShort: false,
+        noDiscards: false,
+        burnedIds: [],
+    };
+}
+
+function applyBossCurses(gs) {
+    clearCurses(gs);
+    const level = gs.level;
+    const numCurses = level === 3 ? 2 : 1;
+    const available = BOSS_CURSES.filter(c => c.weight[level - 1] > 0);
+    const selected = [];
+    const pool = [...available];
+    while (selected.length < numCurses && pool.length > 0) {
+        const curse = weightedRandom(pool, c => c.weight[level - 1]);
+        selected.push(curse);
+        pool.splice(pool.indexOf(curse), 1);
+    }
+    selected.forEach(curse => {
+        gs.curses.active.push(curse.id);
+        curse.apply(gs);
+    });
+}
+
+// ============================================================
+//  RONDA
+// ============================================================
+function initRound() {
+    const gs = gameState;
+    gs.score = 0;
+    gs.isBoss = (gs.round > CONFIG.MAX_ROUNDS);
+    gs.goal = CONFIG.roundGoal(gs.level, gs.isBoss ? 4 : gs.round, gs.isBoss);
+
+    // Calcular jugadas y descartes con mejoras
+    gs.jugadas = Math.min(CONFIG.MAX_JUGADAS, CONFIG.BASE_JUGADAS + gs.levelBonuses.extraJugadas);
+    gs.jugadasLeft = gs.jugadas;
+    gs.discards = Math.min(CONFIG.MAX_DISCARDS, CONFIG.BASE_DISCARDS + gs.upgrades.extraDiscards);
+    gs.discardsLeft = gs.discards;
+
+    gs.selectedIds = [];
+    gs.discardMode = false;
+    cincelMode = false;
+
+    // Bolsa fresca cada ronda
+    gs.bag = [...buildBag(), ...gs.extraBagLetters];
+    shuffleArr(gs.bag);
+
+    // Construir mano
+    const handSize = CONFIG.HAND_SIZE + gs.upgrades.handBonus;
+    gs.hand = Array.from({length: handSize}, () => makeTile(null));
+    fillHand();
+
+    // Aplicar maldiciones si es jefe
+    if (gs.isBoss) {
+        applyBossCurses(gs);
+        if (gs.curses.noDiscards) gs.discardsLeft = 0;
+    } else {
+        clearCurses(gs);
+    }
+
+    clearWord();
+    renderAll();
+    renderCurseBar();
+    renderBuffBar();
+
+    // Mostrar lore pre-ronda (siempre, incluso en jefe)
+    if (!gs.dailyMode) showLoreModal();
+}
+
+// Tabla de multiplicador y bonus por longitud de palabra
+// ============================================================
+//  TABLA DE NIVELES DE PALABRA
+//  Índices: 0=len2, 1=len3, 2=len4, 3=len5, 4=len6, 5=len7+
+//  Cada entrada: array de niveles [lvl1, lvl2, lvl3, lvl4, lvl5]
+//  Cada nivel: { mult, bonus }
+// ============================================================
+const WORD_LEVEL_TABLE = [
+    // len 2
+    [ {mult:1.0,bonus:0}, {mult:1.0,bonus:10}, {mult:1.0,bonus:20}, {mult:2.0,bonus:20}, {mult:2.0,bonus:40} ],
+    // len 3
+    [ {mult:1.0,bonus:2}, {mult:1.0,bonus:15}, {mult:1.5,bonus:15}, {mult:2.0,bonus:25}, {mult:2.0,bonus:50} ],
+    // len 4
+    [ {mult:1.5,bonus:5}, {mult:1.5,bonus:18}, {mult:2.0,bonus:18}, {mult:2.5,bonus:30}, {mult:3.0,bonus:50} ],
+    // len 5
+    [ {mult:2.0,bonus:10}, {mult:2.0,bonus:25}, {mult:2.5,bonus:25}, {mult:3.0,bonus:40}, {mult:3.5,bonus:65} ],
+    // len 6
+    [ {mult:2.5,bonus:16}, {mult:2.5,bonus:35}, {mult:3.0,bonus:35}, {mult:3.5,bonus:55}, {mult:4.0,bonus:85} ],
+    // len 7+
+    [ {mult:3.0,bonus:25}, {mult:3.0,bonus:50}, {mult:3.5,bonus:50}, {mult:4.0,bonus:75}, {mult:5.0,bonus:110} ],
+];
+
+const WORD_LENGTH_LABELS = ['2 letras','3 letras','4 letras','5 letras','6 letras','7+ letras'];
+const WORD_LENGTH_EMOJIS = ['②','③','④','⑤','⑥','⑦'];
+
+// Devuelve el índice de categoría para una longitud dada
+function lenIdx(len) {
+    if (len <= 2) return 0;
+    if (len === 3) return 1;
+    if (len === 4) return 2;
+    if (len === 5) return 3;
+    if (len === 6) return 4;
+    return 5;
+}
+
+// Devuelve el {mult, bonus} activo para una longitud, teniendo en cuenta el nivel actual
+function getWordScore(len) {
+    const idx = lenIdx(len);
+    const level = gameState.upgrades.wordLevels[idx]; // 0-based
+    return WORD_LEVEL_TABLE[idx][level];
+}
+
+// Precio de subir al siguiente nivel (sube con el nivel)
+function wordUpgradePrice(currentLevel) {
+    return [5, 7, 10, 14][currentLevel] || 14;
+}
+
+// Genera los shop items de mejora de palabra dinámicamente
+function getWordUpgradeItems() {
+    const items = [];
+    for (let i = 0; i < 6; i++) {
+        const currentLvl = gameState.upgrades.wordLevels[i];
+        if (currentLvl >= 4) continue; // ya en nivel máximo
+        const nextLvl = currentLvl + 1;
+        const current = WORD_LEVEL_TABLE[i][currentLvl];
+        const next = WORD_LEVEL_TABLE[i][nextLvl];
+        const price = wordUpgradePrice(currentLvl);
+        items.push({
+            id: `word_lvl_${i}`,
+            name: `Palabras de longitud ${WORD_LENGTH_LABELS[i]}`,
+            emoji: WORD_LENGTH_EMOJIS[i],
+            desc: `Sube de Nivel ${currentLvl+1} a Nivel ${nextLvl+1}`,
+            price,
+            weight: [4, 3, 3, 2][currentLvl],
+            isWordUpgrade: true,
+            lenIdx: i,
+            canBuy: gs => gs.upgrades.wordLevels[i] < 4,
+            apply: gs => gs.upgrades.wordLevels[i]++,
+        });
+    }
+    return items;
+}
+
+// ============================================================
+//  PUNTUACIÓN CENTRALIZADA
+// ============================================================
+function calculatePoints(selected) {
+    const gs = gameState;
+    const len = selected.length;
+
+    // Maldiciones a nivel de palabra
+    if (gs.curses.onlyShort && len > 4) return 0;
+    if (gs.curses.shortWordsCursed && len <= 4) return 0;
+    if (gs.curses.oddCursed && len % 2 !== 0) return 0;
+    if (gs.curses.evenCursed && len % 2 === 0) return 0;
+
+    let letterSum = 0;
+    selected.forEach((tile, idx) => {
+        const letter = effectiveLetter(tile);
+        let val = LETTER_VALUES[letter] || 1;
+        if (gs.upgrades.valueBoost && val === 1) val = 2;
+        const lotd = gs.levelBonuses.letterOfDay.find(l => l.letter === letter);
+        if (lotd) val *= 3;
+        if (gs.curses.vocalsCursed && VOWELS.has(letter)) val = 0;
+        if (gs.curses.cursedLetters.includes(letter)) val = 0;
+        if (gs.curses.burnedIds.includes(tile.id)) val = 0;
+        if (gs.upgrades.posDouble.includes(idx)) val *= 2;
+        if (idx >= 6 && gs.upgrades.posFrom7) val *= 2;
+        letterSum += val;
+    });
+
+    const { mult, bonus } = getWordScore(len);
+    return Math.max(0, Math.round(letterSum * mult) + bonus);
+}
+
+function getScoreDetail(selected) {
+    const gs = gameState;
+    const len = selected.length;
+
+    if (gs.curses.onlyShort && len > 4) return { pts: 0, detail: '✗ maldición', mult: 0, bonus: 0 };
+    if (gs.curses.shortWordsCursed && len <= 4) return { pts: 0, detail: '✗ maldición', mult: 0, bonus: 0 };
+    if (gs.curses.oddCursed && len % 2 !== 0) return { pts: 0, detail: '✗ maldición', mult: 0, bonus: 0 };
+    if (gs.curses.evenCursed && len % 2 === 0) return { pts: 0, detail: '✗ maldición', mult: 0, bonus: 0 };
+
+    let letterSum = 0;
+    selected.forEach((tile, idx) => {
+        const letter = effectiveLetter(tile);
+        let val = LETTER_VALUES[letter] || 1;
+        if (gs.upgrades.valueBoost && val === 1) val = 2;
+        const lotd = gs.levelBonuses.letterOfDay.find(l => l.letter === letter);
+        if (lotd) val *= 3;
+        if (gs.curses.vocalsCursed && VOWELS.has(letter)) val = 0;
+        if (gs.curses.cursedLetters.includes(letter)) val = 0;
+        if (gs.curses.burnedIds.includes(tile.id)) val = 0;
+        if (gs.upgrades.posDouble.includes(idx)) val *= 2;
+        if (idx >= 6 && gs.upgrades.posFrom7) val *= 2;
+        letterSum += val;
+    });
+
+    const { mult, bonus } = getWordScore(len);
+    const pts = Math.max(0, Math.round(letterSum * mult) + bonus);
+    const wLvl = gs.upgrades.wordLevels[lenIdx(len)] + 1;
+    const multStr = mult !== 1 ? `×${mult}` : '';
+    const bonusStr = bonus > 0 ? `+${bonus}` : '';
+    const detail = `Nv${wLvl} ${letterSum}pts ${multStr}${bonusStr ? ' ' + bonusStr : ''}`.trim();
+
+    return { pts, detail, mult, bonus };
+}
+
+// ============================================================
+//  RENDER
+// ============================================================
+function renderAll() {
+    renderHUD();
+    renderHand();
+    renderWordDisplay();
+}
+
+function renderHUD() {
+    const gs = gameState;
+
+    if (gs.dailyMode) {
+        // MODO DIARIO
+        document.getElementById('hud-score').textContent = gs.totalScore;
+        document.getElementById('hud-mana-label').textContent = '';
+        document.getElementById('hud-attempts').textContent = '∞';
+        document.getElementById('hud-coins').textContent = gs.coins;
+
+        const lettersLeft = gs.bag.length + gs.hand.filter(t => t.letter).length;
+        document.getElementById('hud-round').textContent = `☠ Diario · ${lettersLeft} letras`;
+
+        const progress = gs.totalScore - dailyLastShopAt;
+        const barPct = Math.min(100, (progress / CONFIG.DAILY_SHOP_THRESHOLD) * 100);
+        document.getElementById('hud-bar').style.width = barPct + '%';
+        document.getElementById('hud-prog-cur').textContent = gs.totalScore;
+        document.getElementById('hud-prog-goal').textContent = `Tienda: ${dailyLastShopAt + CONFIG.DAILY_SHOP_THRESHOLD}`;
+        document.getElementById('boss-row').style.display = 'none';
+        return;
+    }
+
+    // MODO HISTORIA / NORMAL
+    document.getElementById('hud-score').textContent = gs.score;
+    document.getElementById('hud-mana-label').textContent = 'Maná';
+    document.getElementById('hud-attempts').textContent = gs.jugadasLeft;
+    document.getElementById('hud-coins').textContent = gs.coins;
+    document.getElementById('hud-prog-cur').textContent = gs.score;
+    document.getElementById('hud-prog-goal').textContent = gs.goal;
+    const pct = Math.min(100, (gs.score / gs.goal) * 100);
+    document.getElementById('hud-bar').style.width = pct + '%';
+    const roundLabel = gs.isBoss
+        ? `Tomo ${gs.level} · Guardián`
+        : `Tomo ${gs.level} · Página ${gs.round}/${CONFIG.MAX_ROUNDS}`;
+    document.getElementById('hud-round').textContent = roundLabel;
+    document.getElementById('boss-row').style.display = gs.isBoss ? 'flex' : 'none';
+}
+
+function renderHand() {
+    const gs = gameState;
+    const handEl = document.getElementById('hand');
+    if (!handEl) return;
+    handEl.innerHTML = '';
+
+    gs.hand.forEach((tile, idx) => {
+        const div = document.createElement('div');
+        div.className = 'tile';
+        if (!tile.letter) {
+            div.classList.add('empty');
+        } else {
+            const isWild = tile.letter === '*';
+            const isBurned = gs.curses.burnedIds.includes(tile.id);
+            const isCursedLetter = gs.curses.cursedLetters.includes(effectiveLetter(tile));
+            const displayLetter = isWild ? (tile.chosenLetter || '✦') : tile.letter;
+            const displayVal = isWild
+                ? (tile.chosenLetter ? LETTER_VALUES[tile.chosenLetter] || 1 : '?')
+                : (LETTER_VALUES[tile.letter] || 1);
+
+            div.textContent = displayLetter;
+            if (isWild) div.classList.add('wildcard');
+            if (isBurned) div.classList.add('burned');
+            if (isCursedLetter) div.classList.add('cursed-tile');
+
+            // Marca letra del día
+            const lotd = gs.levelBonuses.letterOfDay.find(l => l.letter === displayLetter);
+            if (lotd) div.classList.add('letter-day');
+
+            const val = document.createElement('div');
+            val.className = 'tile-val';
+            val.textContent = isBurned || (isCursedLetter && !isWild) ? '🔥' : displayVal;
+            div.appendChild(val);
+
+            if (cincelMode && !isWild) {
+                div.classList.add('cincel-ready');
+                div.onclick = () => openPicker(tile.id, true);
+            } else if (gs.discardMode) {
+                div.classList.add('discarding');
+                if (gs.selectedIds.includes(tile.id)) div.style.opacity = '0.4';
+                div.onclick = () => toggleDiscardSelect(tile.id);
+            } else {
+                if (gs.selectedIds.includes(tile.id)) div.classList.add('selected');
+                div.onclick = () => {
+                    if (isWild && !tile.chosenLetter) openPicker(tile.id);
+                    else toggleSelect(tile.id);
+                };
+            }
+        }
+        if (tile.letter) addDragToTile(div, idx, gs.hand, renderHand);
+        handEl.appendChild(div);
+    });
+    document.getElementById('bag-info').textContent =
+        gs.bag.length > 0 ? `BOLSA: ${gs.bag.length} letras` : 'BOLSA VACÍA';
+
+    // Botón descarte
+    const discardBtn = document.getElementById('btn-discard');
+    const discardCount = document.getElementById('discard-count');
+    const noDisc = gs.curses.noDiscards;
+    discardBtn.disabled = !gs.dailyMode && (gs.discardsLeft <= 0 || noDisc);
+    discardBtn.classList.toggle('active', gs.discardMode);
+    discardCount.textContent = gs.dailyMode ? '' : (noDisc ? '(maldito)' : `(${gs.discardsLeft} restantes)`);
+
+    // Botón cincel
+    const cincelBtn = document.getElementById('btn-cincel');
+    if (cincelBtn) {
+        cincelBtn.style.display = gs.upgrades.cincelUses > 0 ? 'inline-flex' : 'none';
+        cincelBtn.classList.toggle('active', cincelMode);
+        cincelBtn.textContent = `🔨 Cincel (${gs.upgrades.cincelUses})`;
+    }
+
+    document.getElementById('discard-hint').classList.toggle('visible', gs.discardMode);
+    document.getElementById('cincel-hint').classList.toggle('visible', cincelMode);
+}
+
+function renderWordDisplay() {
+    const gs = gameState;
+    const el = document.getElementById('word-display');
+    const selected = gs.selectedIds.map(id => gs.hand.find(t => t.id === id)).filter(Boolean);
+
+    if (selected.length === 0) {
+        el.innerHTML = `<div class="word-placeholder" style="font-family:'IM Fell English',serif;font-style:italic;font-size:14px;color:var(--text-dim);letter-spacing:2px">escribe tu encantamiento...</div>`;
+    } else {
+        el.innerHTML = '';
+        selected.forEach((tile, idx) => {
+            const div = document.createElement('div');
+            div.className = 'word-letter';
+            const eff = effectiveLetter(tile);
+            div.textContent = eff;
+            if (tile.letter === '*') div.style.color = '#a78bfa';
+            if (gs.curses.burnedIds.includes(tile.id)) div.style.opacity = '0.4';
+            if (gs.curses.cursedLetters.includes(eff)) div.style.textDecoration = 'line-through';
+            // Position highlight
+            if (gs.upgrades.posDouble.includes(idx)) div.classList.add('pos-boosted');
+            if (idx >= 6 && gs.upgrades.posFrom7) div.classList.add('pos-boosted');
+            const val = document.createElement('div');
+            val.className = 'letter-val';
+            val.textContent = LETTER_VALUES[eff] || 1;
+            div.appendChild(val);
+            el.appendChild(div);
+        });
+    }
+
+    const previewEl = document.getElementById('word-score-preview');
+    if (selected.length >= 1) {
+        const { pts, detail, mult, bonus } = getScoreDetail(selected);
+        let html = `${pts} ${gs.dailyMode ? 'poder' : 'pts'} <span class="preview-detail">(${detail})</span>`;
+        previewEl.innerHTML = html;
+    } else {
+        previewEl.innerHTML = '';
+    }
+
+    const hasWord = selected.length >= 2;
+    document.getElementById('btn-play').disabled = !hasWord;
+    document.getElementById('btn-clear').disabled = selected.length === 0;
+}
+
+function renderCurseBar() {
+    const gs = gameState;
+    const bar = document.getElementById('curse-bar');
+    if (!bar) return;
+    bar.innerHTML = '';
+    if (!gs.isBoss || gs.curses.active.length === 0) return;
+    gs.curses.active.forEach(id => {
+        const curse = BOSS_CURSES.find(c => c.id === id);
+        if (!curse) return;
+        const span = document.createElement('span');
+        span.className = 'curse-tag';
+        let name = curse.name;
+        if (id === 'letters_cursed' && gs.curses.cursedLetters.length > 0) {
+            name += `: ${gs.curses.cursedLetters.join(', ')}`;
+        }
+        span.textContent = `${curse.emoji} ${name}`;
+        bar.appendChild(span);
+    });
+}
+
+function renderBuffBar() {
+    const gs = gameState;
+    const bar = document.getElementById('buff-bar');
+    if (!bar) return;
+    // [label, tooltip]
+    const buffs = [];
+    if (gs.upgrades.valueBoost) buffs.push(['⬆️ Valor+1', 'Valor Mejorado: letras de 1 punto pasan a valer 2']);
+    if (gs.upgrades.handBonus > 0) buffs.push([`✋+${gs.upgrades.handBonus}`, `Mano Grande: +${gs.upgrades.handBonus} letra${gs.upgrades.handBonus>1?'s':''} extra en mano (permanente)`]);
+    if (gs.upgrades.posFrom7) buffs.push(['⑦×2', 'Poder Posicional: letra en posición 7+ vale el doble']);
+    gs.upgrades.posDouble.forEach(p => buffs.push([`×2pos${p+1}`, `Posición ${p+1} vale el doble`]));
+    if (gs.upgrades.discardEconomy) buffs.push(['💎EcoDesc', 'Economía de Descarte: descartes sin usar dan +1🪙 al final de página']);
+    if (gs.upgrades.playEconomy) buffs.push(['💎EcoJug', 'Economía de Maná: maná sin usar vale el doble de esencia']);
+    if (gs.upgrades.extraDiscards > 0) buffs.push([`♻️+${gs.upgrades.extraDiscards}`, `Reciclaje: +${gs.upgrades.extraDiscards} descarte${gs.upgrades.extraDiscards>1?'s':''} permanente${gs.upgrades.extraDiscards>1?'s':''}`]);
+    if (gs.upgrades.freeShortWords) buffs.push(['📖 Dicc.Libre', 'Diccionario Libre: palabras de 2 letras no gastan maná']);
+    if (gs.extraBagLetters && gs.extraBagLetters.length > 0) buffs.push([`🎒+${gs.extraBagLetters.length}`, `Bolsa Extra: +${gs.extraBagLetters.length} letras permanentes añadidas a la bolsa`]);
+    gs.levelBonuses.letterOfDay.forEach(l => buffs.push([`⭐${l.letter}×3`, `Letra del Día: ${l.letter} vale ×3 este nivel`]));
+    if (gs.levelBonuses.extraJugadas > 0) buffs.push([`🃏+${gs.levelBonuses.extraJugadas}jug`, `Ronda Extra: +${gs.levelBonuses.extraJugadas} de maná este nivel`]);
+    // Niveles de palabra
+    gs.upgrades.wordLevels.forEach((lvl, i) => {
+        if (lvl > 0) {
+            const { mult, bonus } = WORD_LEVEL_TABLE[i][lvl];
+            const len = i === 5 ? '7+' : String(i + 2);
+            buffs.push([`${WORD_LENGTH_EMOJIS[i]}Nv${lvl+1} ×${mult}+${bonus}`, `Palabras de ${len} letras: multiplicador ×${mult}, bonus +${bonus} pts`]);
+        }
+    });
+
+    if (buffs.length === 0) {
+        bar.style.display = 'none';
+    } else {
+        bar.style.display = 'flex';
+        bar.innerHTML = buffs.map(([label, tip]) =>
+            `<span class="buff-tag" title="${tip}" style="cursor:help">${label}</span>`
+        ).join('');
+    }
+}
+
+// ============================================================
+//  SELECCIÓN
+// ============================================================
+function toggleSelect(id) {
+    if (gameState.discardMode || cincelMode) return;
+    const idx = gameState.selectedIds.indexOf(id);
+    if (idx === -1) {
+        gameState.selectedIds.push(id);
+    } else {
+        gameState.selectedIds.splice(idx, 1);
+        // Si era un comodín, resetear la letra elegida al devolverlo a la mano
+        const tile = gameState.hand.find(t => t.id === id);
+        if (tile && tile.letter === '*') tile.chosenLetter = null;
+    }
+    renderWordDisplay();
+    renderHand();
+}
+
+function toggleDiscardSelect(id) {
+    const idx = gameState.selectedIds.indexOf(id);
+    if (idx === -1) gameState.selectedIds.push(id);
+    else gameState.selectedIds.splice(idx, 1);
+    renderHand();
+}
+
+function clearWord() {
+    // Resetear letra elegida en comodines que estaban seleccionados
+    gameState.selectedIds.forEach(id => {
+        const tile = gameState.hand.find(t => t.id === id);
+        if (tile && tile.letter === '*') tile.chosenLetter = null;
+    });
+    gameState.selectedIds = [];
+    renderWordDisplay();
+    renderHand();
+    setFeedback('', '');
+}
+
+// ============================================================
+//  CINCEL
+// ============================================================
+function toggleCincelMode() {
+    const gs = gameState;
+    if (gs.upgrades.cincelUses <= 0) return;
+    cincelMode = !cincelMode;
+    if (cincelMode) {
+        gs.selectedIds = [];
+        gs.discardMode = false;
+    }
+    renderHand();
+    renderWordDisplay();
+    document.getElementById('cincel-hint').classList.toggle('visible', cincelMode);
+}
+
+// ============================================================
+//  DESCARTAR
+// ============================================================
+function toggleDiscardMode() {
+    const gs = gameState;
+    if (!gs.dailyMode && (gs.discardsLeft <= 0 || gs.curses.noDiscards)) return;
+    gs.discardMode = !gs.discardMode;
+    gs.selectedIds = [];
+    cincelMode = false;
+    renderHand();
+    renderWordDisplay();
+    if (gs.discardMode) {
+        document.getElementById('btn-discard').onclick = confirmDiscard;
+        document.getElementById('btn-discard').textContent = '✓ Confirmar';
+    } else {
+        document.getElementById('btn-discard').onclick = toggleDiscardMode;
+        document.getElementById('btn-discard').textContent = '✕ Descartar';
+    }
+}
+
+function confirmDiscard() {
+    const gs = gameState;
+    const toDiscard = [...gs.selectedIds];
+    if (toDiscard.length === 0) {
+        gs.discardMode = false;
+        document.getElementById('btn-discard').onclick = toggleDiscardMode;
+        document.getElementById('btn-discard').textContent = '✕ Descartar';
+        renderHand();
+        return;
+    }
+    toDiscard.forEach(id => {
+        const tile = gs.hand.find(t => t.id === id);
+        if (tile) { tile.letter = null; tile.chosenLetter = null; }
+    });
+    if (!gs.dailyMode) gs.discardsLeft--;
+    gs.selectedIds = [];
+    gs.discardMode = false;
+    document.getElementById('btn-discard').onclick = toggleDiscardMode;
+    document.getElementById('btn-discard').textContent = '✕ Descartar';
+    fillHand();
+    if (!gs.dailyMode) addLog(`Descarte (${gs.discardsLeft} restantes)`, 'sys');
+    renderAll();
+}
+
+// ============================================================
+//  REVOLVER
+// ============================================================
+function shuffleHand() {
+    const gs = gameState;
+    const letters = gs.hand.map(t => ({ letter: t.letter, chosen: t.chosenLetter }));
+    const shuffled = shuffleArr(letters);
+    gs.hand.forEach((t, i) => { t.letter = shuffled[i].letter; t.chosenLetter = shuffled[i].chosen; });
+    gs.selectedIds = [];
+    renderHand();
+    renderWordDisplay();
+}
+
+// ============================================================
+//  JUGAR PALABRA
+// ============================================================
+function playWord() {
+    const gs = gameState;
+    const selected = gs.selectedIds.map(id => gs.hand.find(t => t.id === id)).filter(Boolean);
+    if (selected.length < 2) return;
+
+    const unresolved = selected.find(t => t.letter === '*' && !t.chosenLetter);
+    if (unresolved) { setFeedback('Elige una letra para el comodín ✦', 'err'); return; }
+
+    const word = selected.map(t => effectiveLetter(t)).join('');
+
+    if (!isValidWord(word)) {
+        setFeedback(`"${word}" no existe`, 'err');
+        clearWord();
+        return;
+    }
+
+    const points = calculatePoints(selected);
+
+    gs.score += points;
+    gs.totalScore += points;
+    gs.totalWords++;
+    // Diccionario Libre: palabras ≤3 letras no gastan jugada
+    if (!gs.dailyMode && !(gs.upgrades.freeShortWords && word.length <= 2)) gs.jugadasLeft--;
+    if (gs.dailyMode) gs.coins += 1;
+
+    // Quitar fichas usadas
+    gs.selectedIds.forEach(id => {
+        const tile = gs.hand.find(t => t.id === id);
+        if (tile) { tile.letter = null; tile.chosenLetter = null; }
+    });
+    gs.selectedIds = [];
+    fillHand();
+
+    // Actualizar fichas quemadas tras jugar (Mano Quemada)
+    if (gs.curses.burnedIds.length > 0) {
+        refreshBurnedTiles(gs);
+    }
+
+    setFeedback(`+${points} ${gs.dailyMode ? 'poder' : 'pts'}`, 'ok');
+    addLog(word, 'ok', points);
+    showScorePop(`+${points}`);
+    renderAll();
+    renderCurseBar();
+
+    if (gs.score >= gs.goal) { setTimeout(roundWin, 600); return; }
+    if (gs.jugadasLeft <= 0 && !gs.dailyMode) { setTimeout(gameOver, 500); return; }
+
+    // Palabra secreta del grimorio — victoria instantánea + esencia
+    if (!gs.dailyMode && checkSecretWord(word)) {
+        setTimeout(triggerSecretWord, 700);
+        return;
+    }
+
+    // Daily mode: update HUD, check shop, check end
+    if (gs.dailyMode) {
+        // Refill jugadas when exhausted (like a new mini-round)
+        if (gs.jugadasLeft <= 0) {
+            gs.jugadasLeft = CONFIG.BASE_JUGADAS;
+        }
+        renderHUD(); // daily HUD update
+        if (checkDailyShop()) return;
+        const hasLetters = gs.hand.some(t => t.letter !== null) || gs.bag.length > 0;
+        if (!hasLetters) { setTimeout(endDailyMode, 500); return; }
+        return;
+    }
+
+    // Game over si bolsa vacía Y mano vacía
+    const hasLetters = gs.hand.some(t => t.letter !== null);
+    if (!hasLetters) { setTimeout(gameOver, 500); return; }
+}
+
+// ============================================================
+//  ROUND WIN / PROGRESSION
+// ============================================================
+function roundWin() {
+    const gs = gameState;
+
+    // Calcular monedas
+    const baseCoins = 2;
+    const discardCoins = gs.upgrades.discardEconomy ? gs.discardsLeft * 1 : 0;
+    const playMult = gs.upgrades.playEconomy ? 2 : 1;
+    const playCoins = gs.jugadasLeft * 1 * playMult;
+    const totalCoins = baseCoins + discardCoins + playCoins;
+    gs.coins += totalCoins;
+
+    const isBossWin = gs.isBoss;
+    document.getElementById('rw-title').textContent = isBossWin ? '📖 ¡Tomo Profanado!' : '🩸 ¡Página Maldita!';
+    document.getElementById('rw-sub').textContent = `${gs.score} / ${gs.goal} pts`;
+    document.getElementById('rw-score').textContent = gs.score;
+
+    // Desglose monedas
+    let coinsHTML = `<div class="coin-row"><span>Base</span><span>+${baseCoins} 🪙</span></div>`;
+    if (discardCoins > 0) coinsHTML += `<div class="coin-row"><span>Descartes sin usar (×2)</span><span>+${discardCoins} 🪙</span></div>`;
+    if (playCoins > 0) coinsHTML += `<div class="coin-row"><span>Jugadas sin usar${gs.upgrades.playEconomy ? ' (×2)' : ''}</span><span>+${playCoins} 🪙</span></div>`;
+    coinsHTML += `<div class="coin-row total"><span>Total</span><span>+${totalCoins} 🪙</span></div>`;
+    document.getElementById('rw-coins').innerHTML = coinsHTML;
+
+    showModal('round-win');
+}
+
+
+function shopContinue() {
+    if (gameState && gameState.dailyMode) {
+        closeDailyShop();
+    } else {
+        nextRound();
+    }
+}
+
+function goToShop() {
+    const gs = gameState;
+    hideAllModals();
+
+    const wasBoss = gs.isBoss;
+    if (wasBoss) {
+        // Nuevo nivel: resetear bonuses de nivel
+        gs.levelBonuses.letterOfDay = [];
+        gs.levelBonuses.extraJugadas = 0;
+        gs.level++;
+        gs.round = 1;
+        if (gs.level > CONFIG.MAX_LEVELS) { victory(); return; }
+    } else {
+        gs.round++;
+    }
+
+    gs.shopVisits++;
+    const shopSlots = gs.upgrades.shopSize ? 4 : 3;
+
+    // Separar mejoras normales de mejoras de palabra
+    const normalItems = SHOP_ITEMS.filter(item => {
+        if (!item.canBuy(gs)) return false;
+        // Tamaño de tienda no aparece en las 2 primeras visitas
+        if (item.id === 'shop_size' && gs.shopVisits <= 2) return false;
+        return true;
+    });
+    const wordItems = getWordUpgradeItems();
+
+    // Selección: primero elegir si habrá 1 mejora de palabra (50% si hay disponibles)
+    const selection = [];
+    const pool = [...normalItems];
+
+    // Añadir exactamente 1 mejora de palabra (si hay y hay hueco)
+    if (wordItems.length > 0 && Math.random() < 0.6) {
+        const wordItem = weightedRandom(wordItems, i => i.weight);
+        selection.push(wordItem);
+    }
+
+    // Rellenar el resto con mejoras normales
+    while (selection.length < shopSlots && pool.length > 0) {
+        const item = weightedRandom(pool, i => i.weight);
+        selection.push(item);
+        pool.splice(pool.indexOf(item), 1);
+    }
+
+    // Mezclar para que la mejora de palabra no siempre salga primera
+    for (let i = selection.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [selection[i], selection[j]] = [selection[j], selection[i]];
+    }
+
+    gs.shopSelection = selection;
+    gs.shopBoughtIds = [];
+
+    const nextLabel = gs.round > CONFIG.MAX_ROUNDS
+        ? `Siguiente: Tomo ${gs.level} · Guardián`
+        : `Siguiente: Nivel ${gs.level} · Ronda ${gs.round}/${CONFIG.MAX_ROUNDS}`;
+    document.getElementById('shop-sub').textContent = nextLabel;
+    document.getElementById('shop-coins').textContent = `${gs.coins} 🪙`;
+
+    renderShop();
+    showModal('shop');
+}
+
+function renderShop() {
+    const gs = gameState;
+    const grid = document.getElementById('shop-grid');
+    grid.innerHTML = '';
+    const items = gs.shopSelection || [];
+    items.forEach(item => {
+        const alreadyBought = gs.shopBoughtIds.includes(item.id);
+        const canAfford = gs.coins >= item.price;
+        const canBuy = item.canBuy(gs);
+        const disabled = alreadyBought || !canAfford || !canBuy;
+
+        // Descripción más clara para mejoras de palabra
+        let desc = item.desc;
+        if (item.isWordUpgrade) {
+            const idx = item.lenIdx;
+            const curLvl = gs.upgrades.wordLevels[idx];
+            const cur = WORD_LEVEL_TABLE[idx][curLvl];
+            const nxt = WORD_LEVEL_TABLE[idx][curLvl + 1];
+            desc = `Ahora: ×${cur.mult} +${cur.bonus} de bonus<br>` +
+                   `Después: ×${nxt.mult} +${nxt.bonus} de bonus`;
+        }
+
+        const div = document.createElement('div');
+        let cls = 'shop-item';
+        if (alreadyBought) cls += ' already-bought';
+        else if (!canAfford || !canBuy) cls += ' cant-afford';
+        div.className = cls;
+
+        const isBracketIcon = /^\[.+\]$/.test(item.emoji);
+        const iconClass = isBracketIcon ? 'shop-item-icon' : 'shop-item-icon emoji-icon';
+
+        div.innerHTML = `
+            <div class="${iconClass}">${item.emoji}</div>
+            <div class="shop-item-body">
+                <div class="shop-item-name">${item.name}${alreadyBought ? ' ✓' : ''}</div>
+                <div class="shop-item-desc">${desc.replace(/\n/g, '<br>')}</div>
+            </div>
+            <div class="shop-item-price">${item.price}🪙</div>
+        `;
+
+        if (!disabled) div.onclick = () => buyItem(item);
+        grid.appendChild(div);
+    });
+    document.getElementById('shop-coins').textContent = `${gs.coins} 🪙`;
+}
+
+function buyItem(item) {
+    const gs = gameState;
+    if (gs.coins < item.price || !item.canBuy(gs)) return;
+    if (gs.shopBoughtIds.includes(item.id)) return;
+    gs.coins -= item.price;
+    gs.shopBoughtIds.push(item.id);
+    item.apply(gs);
+    addLog(`Comprado: ${item.name}`, 'sys');
+    renderShop();
+    renderBuffBar();
+}
+
+function nextRound() {
+    hideAllModals();
+    initRound();
+}
+
+// ============================================================
+//  BOSS INTRO
+// ============================================================
+function showBossIntro() {
+    const gs = gameState;
+    const curseList = document.getElementById('boss-curse-list');
+    curseList.innerHTML = '';
+    gs.curses.active.forEach(id => {
+        const curse = BOSS_CURSES.find(c => c.id === id);
+        if (!curse) return;
+        let name = curse.name;
+        if (id === 'letters_cursed' && gs.curses.cursedLetters.length > 0) {
+            name += `: ${gs.curses.cursedLetters.join(', ')}`;
+        }
+        curseList.innerHTML += `
+            <div class="boss-curse-item">
+                <span class="boss-curse-emoji">${curse.emoji}</span>
+                <div>
+                    <div class="boss-curse-name">${name}</div>
+                    <div class="boss-curse-desc">${curse.desc}</div>
+                </div>
+            </div>`;
+    });
+    document.getElementById('boss-intro-level').textContent = `Tomo ${gs.level} · Objetivo: ${gs.goal} pts`;
+    showModal('boss-intro');
+}
+
+function startBossFight() {
+    hideAllModals();
+    addLog(`⚔ JEFE — Objetivo: ${gameState.goal} pts`, 'sys');
+}
+
+// ============================================================
+//  GAME OVER / VICTORY
+// ============================================================
+function gameOver() {
+    const gs = gameState;
+    deleteSave();
+    const stats = document.getElementById('gameover-stats');
+    stats.innerHTML = `
+        <div class="result-stat-row"><span>Tomo alcanzado</span><span>${gs.level}</span></div>
+        <div class="result-stat-row"><span>Página</span><span>${gs.round}</span></div>
+        <div class="result-stat-row"><span>Palabras maldecidas</span><span>${gs.totalWords}</span></div>
+        <div class="result-stat-row"><span>Poder acumulado</span><span>${gs.totalScore}</span></div>
+    `;
+    showModal('gameover');
+}
+
+function victory() {
+    const gs = gameState;
+    deleteSave();
+    const stats = document.getElementById('victory-stats');
+    stats.innerHTML = `
+        <div class="result-stat-row"><span>Palabras maldecidas</span><span>${gs.totalWords}</span></div>
+        <div class="result-stat-row"><span>Poder acumulado</span><span>${gs.totalScore}</span></div>
+        <div class="result-stat-row"><span>Monedas restantes</span><span>${gs.coins} 🪙</span></div>
+    `;
+    showModal('victory');
+}
+
+// ============================================================
+//  UI HELPERS
+// ============================================================
+function setFeedback(msg, type) {
+    const el = document.getElementById('feedback');
+    el.textContent = msg;
+    el.className = 'feedback ' + type;
+}
+
+function addLog(msg, type, pts) {
+    const log = document.getElementById('log');
+    const entry = document.createElement('div');
+    entry.className = 'log-entry ' + type;
+    if (type === 'sys') {
+        entry.innerHTML = `<span>— ${msg}</span>`;
+    } else {
+        entry.innerHTML = `<span class="log-word">${msg}</span>${pts !== undefined ? `<span class="log-pts">+${pts} pts</span>` : ''}`;
+    }
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+}
+
+function showScorePop(text) {
+    const pop = document.createElement('div');
+    pop.className = 'score-pop';
+    pop.textContent = text;
+    const wa = document.querySelector('.word-area');
+    const rect = wa.getBoundingClientRect();
+    pop.style.left = (rect.left + rect.width / 2 - 30) + 'px';
+    pop.style.top = (rect.top - 10 + window.scrollY) + 'px';
+    document.body.appendChild(pop);
+    setTimeout(() => pop.remove(), 1300);
+}
+
+function showModal(name) { document.getElementById('modal-' + name).classList.add('active'); }
+function hideAllModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active')); }
+
+// ============================================================
+//  EXIT / SAVE SEED
+// ============================================================
+function showExitModal() {
+    document.getElementById('save-seed-area').style.display = 'none';
+    const btn = document.getElementById('btn-save-firebase');
+    btn.textContent = '💾 Guardar partida';
+    btn.disabled = false;
+    showModal('exit');
+}
+
+function resetGame() {
+    const sb = document.getElementById('btn-surrender'); if (sb) sb.style.display = 'none';
+    hideAllModals();
+    gameState = freshState();
+    showScreen('start');
+}
+
+function confirmSurrender() {
+    hideAllModals();
+    resetGame();
+}
+
+function copySeed() {
+    const code = document.getElementById('seed-display').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+        const btn = document.querySelector('#save-seed-area button');
+        btn.textContent = '✓ Copiado!';
+        setTimeout(() => btn.textContent = '📋 Copiar código', 2000);
+    }).catch(() => {
+        const el = document.getElementById('seed-display');
+        const range = document.createRange();
+        range.selectNode(el);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+    });
+}
+
+// ============================================================
+//  LORE — TEXTOS Y PALABRAS SECRETAS
+// ============================================================
+const LORE_TOMOS = [
+    {
+        titulo: 'Tomo I · Tratado de las Virtudes Eternas',
+        paginas: [
+            {
+                texto: `Los dedos del nigromante se tiñen de rojo sobre el pergamino. Cada letra que mancha con sangre pierde su inocencia para siempre. Siente cómo el <em>alma</em> de las palabras se retuerce bajo su voluntad.`,
+                palabra: 'ALMA',
+                bonus: 6,
+                reveal: 'El Tratado llora. Has corrompido su esencia más sagrada.'
+            },
+            {
+                texto: `El olor a canela y cera bendita no puede disimular la podredumbre que avanza página a página. Inscribes una <em>runa</em> de sangre en el margen, invisible a ojos mortales. El libro ya no es lo que era.`,
+                palabra: 'RUNA',
+                bonus: 6,
+                reveal: 'Una runa de sangre queda grabada en el margen para siempre.'
+            },
+            {
+                texto: `Las letras doradas de la portada palidecen. Sientes la resistencia del tomo: algo antiguo y sabio se niega a morir. Pero tu <em>sed</em> es más antigua que cualquier dios de biblioteca.`,
+                palabra: 'SED',
+                bonus: 5,
+                reveal: 'La sed del ritual no tiene fondo. El tomo te lo sabe ya.'
+            },
+        ],
+        guardian: {
+            texto: `Entre los pasillos aparece una sombra con ojos de papel y dedos de pergamino. «Profanador», susurra, su voz el crujido de mil páginas. «Este tomo no caerá mientras yo exista».`,
+        }
+    },
+    {
+        titulo: 'Tomo II · Crónicas del Mundo Invisible',
+        paginas: [
+            {
+                texto: `Este libro registra nombres que nunca deberían haber sido escritos. Al leerlos en voz alta, el mundo tiembla levemente. Añades tu propio <em>nombre</em> a la lista, en tinta negra y sangre vieja.`,
+                palabra: 'NOMBRE',
+                bonus: 8,
+                reveal: 'Tu nombre queda inscrito entre los que mueven el mundo desde las sombras.'
+            },
+            {
+                texto: `Las crónicas describen el día en que el cielo se abrió como un <em>libro</em>. Irónicamente, es precisamente eso lo que estás haciendo ahora: abrir lo que debe permanecer cerrado.`,
+                palabra: 'LIBRO',
+                bonus: 7,
+                reveal: 'Lo que estaba cerrado se abre. Lo que dormía, despierta.'
+            },
+            {
+                texto: `Cada <em>sello</em> que rompes en estas páginas libera un eco del inframundo. Los otros nigromantes fracasaron aquí, consumidos por lo que invocaron. Tú sonríes y sigues escribiendo.`,
+                palabra: 'SELLO',
+                bonus: 8,
+                reveal: 'El sello se rompe. Un eco oscuro resuena bajo la biblioteca.'
+            },
+        ],
+        guardian: {
+            texto: `Un anciano de barba de polvo y ojos de tinta emerge de entre los estantes. Lleva siglos custodiando este tomo. Cada página que has corrompido le ha costado años de vida. Te mira con odio y tristeza a partes iguales.`,
+        }
+    },
+    {
+        titulo: 'Tomo III · El Gran Código',
+        paginas: [
+            {
+                texto: `El Gran Código. El libro que, según se dice, contiene el verdadero nombre de <em>Dios</em>. Si consigues corromperk, los que lo lean sin saberlo pronunciarán en su lugar el nombre del que duerme.`,
+                palabra: 'DIOS',
+                bonus: 10,
+                reveal: 'El nombre sagrado tiembla. Algo muy abajo escucha.'
+            },
+            {
+                texto: `Las páginas centrales arden sin quemarse, protegidas por un <em>fuego</em> que no es de este mundo. Tu sangre las apaga una por una. Sientes que el ritual está casi completo.`,
+                palabra: 'FUEGO',
+                bonus: 10,
+                reveal: 'El fuego sagrado se extingue. Solo queda oscuridad y posibilidad.'
+            },
+            {
+                texto: `La última página. Si la maldices, todo el que lea El Gran Código pronunciará sin saberlo las palabras del ritual. El <em>reino</em> de lo que duerme comenzará con un simple acto de lectura inocente.`,
+                palabra: 'REINO',
+                bonus: 12,
+                reveal: 'El Gran Código está corrompido. El ritual está casi consumado.'
+            },
+        ],
+        guardian: {
+            texto: `No es un anciano. No es una sombra. Es el propio libro que ha cobrado forma: una entidad de papel y voluntad que lleva milenios esperando este momento para defenderlo. Su voz es el eco de todos los libros que jamás se escribieron. «Hasta aquí», dice. «Nunca más allá».`,
+        }
+    }
+];
+
+const SECRET_BONUS_COINS = 5;
+
+function getLoreData(level, round, isBoss) {
+    const tomo = LORE_TOMOS[Math.min(level - 1, LORE_TOMOS.length - 1)];
+    if (isBoss) return { tomo, pagina: null, isGuardian: true };
+    return { tomo, pagina: tomo.paginas[Math.min(round - 1, tomo.paginas.length - 1)], isGuardian: false };
+}
+
+function showLoreModal() {
+    const gs = gameState;
+    const { tomo, pagina, isGuardian } = getLoreData(gs.level, gs.round, gs.isBoss);
+
+    document.getElementById('lore-tomo-label').textContent = tomo.titulo;
+    document.getElementById('lore-goal').textContent = gs.goal;
+
+    const labelStr = isGuardian ? '📖 El Guardián del Tomo' : `Página ${gs.round} de ${CONFIG.MAX_ROUNDS}`;
+
+    if (isGuardian) {
+        document.getElementById('lore-text').innerHTML = tomo.guardian.texto;
+        gs.secretWord = null;
+    } else {
+        document.getElementById('lore-text').innerHTML = pagina.texto;
+        gs.secretWord = pagina.palabra;
+        gs.secretBonus = pagina.bonus;
+        gs.secretReveal = pagina.reveal;
+        gs.secretFound = false;
+    }
+
+    // Style the em tags as glowing gold
+    document.querySelectorAll('#lore-text em').forEach(el => {
+        el.style.cssText = 'color:var(--gold);font-style:italic;font-weight:bold;text-shadow:0 0 8px rgba(200,160,50,0.4)';
+    });
+
+    showModal('lore');
+}
+
+function startLoreRound() {
+    hideAllModals();
+    const gs = gameState;
+    // If boss, show boss intro after lore
+    if (gs.isBoss && gs.curses.active.length > 0) {
+        showBossIntro();
+    } else {
+        const label = gs.isBoss ? 'GUARDIÁN' : `Página ${gs.round}`;
+        addLog(`${label} — Objetivo: ${gs.goal} pts`, 'sys');
+    }
+}
+
+function checkSecretWord(word) {
+    const gs = gameState;
+    if (!gs.secretWord || gs.secretFound) return false;
+    return word.toUpperCase() === gs.secretWord.toUpperCase();
+}
+
+function triggerSecretWord() {
+    const gs = gameState;
+    gs.secretFound = true;
+    const bonusCoins = SECRET_BONUS_COINS;
+    gs.coins += bonusCoins;
+
+    document.getElementById('secret-reveal-text').innerHTML =
+        `«${gs.secretReveal}»<br><br>Esencia extra por descubrir la palabra del grimorio:`;
+    document.getElementById('secret-bonus-pts').textContent = `+${bonusCoins} esencia`;
+    showModal('secret');
+}
+
+function closeSecretModal() {
+    hideAllModals();
+    setTimeout(() => roundWin(), 400);
+}
+const firebaseConfig = {
+    apiKey: "AIzaSyDWST4NKU_roqoGsMAAevs4zd-c4IqAOEU",
+    authDomain: "digitcode-d991e.firebaseapp.com",
+    databaseURL: "https://digitcode-d991e-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "digitcode-d991e",
+    storageBucket: "digitcode-d991e.firebasestorage.app",
+    messagingSenderId: "958984288633",
+    appId: "1:958984288633:web:c88980de5de0a5422597a8"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+function generateCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sin 0,O,1,I para evitar confusiones
+    let code = '';
+    for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+}
+
+
+// ============================================================
+//  MODO DUELO
+// ============================================================
+const DUEL_DURATION = 180; // 3 minutos en segundos
+const DUEL_WIN_POWER = 100;
+const DUEL_CARDS = {
+    buff: [
+        { id: 'buff_hand',    emoji: '✋', name: '+2 Letras',      desc: 'Roba 2 letras extra para tu mano ahora mismo.' },
+        { id: 'buff_jugada',  emoji: '⚡', name: '+3 Jugadas',     desc: 'Gana 3 jugadas extra este turno.' },
+        { id: 'buff_double',  emoji: '×2', name: 'Doble Poder',    desc: 'Tu próxima palabra vale el doble de poder.' },
+        { id: 'buff_discard', emoji: '♻️', name: '+2 Descartes',   desc: 'Recupera 2 descartes ahora mismo.' },
+    ],
+    debuff: [
+        { id: 'debuff_freeze',  emoji: '❄️', name: 'Congelar',      desc: 'El rival pierde su próxima jugada.' },
+        { id: 'debuff_burn',    emoji: '🔥', name: 'Quemar',        desc: 'Una ficha aleatoria del rival queda inutilizable 10s.' },
+        { id: 'debuff_steal',   emoji: '💀', name: 'Robar Poder',   desc: 'Robas 10 de poder al rival directamente.' },
+        { id: 'debuff_shuffle', emoji: '🌀', name: 'Caos',          desc: 'La mano del rival se revuelve aleatoriamente.' },
+    ]
+};
+
+let duelState = {
+    salaCode: null,
+    mySide: 'blue',        // 'blue' | 'red'
+    myName: '',
+    rivalName: '',
+    isCreator: false,
+    power: 0,              // shared: blue positive, red negative. Range [-100, 100]
+    myScore: 0,
+    myWords: 0,
+    timerLeft: DUEL_DURATION,
+    timerInterval: null,
+    firebaseRef: null,
+    milestone25Used: false,
+    milestone50Used: false,
+    nextWordDouble: false,
+    freezeActive: false,
+    discardMode: false,
+    discardsLeft: 4,
+    hand: [],
+    bag: [],
+    selectedIds: [],
+    upgrades: { handBonus: 0, valueBoost: false, posDouble: [], wordLevels: [0,0,0,0,0,0] },
+};
+
+let duelLobbyMode = 'create'; // 'create' | 'join'
+let duelLaunched = false;
+let duelSelectedSide = 'blue';
+
+// ── NAVIGATION ────────────────────────────────────────────────
+
+function showDuelCreate() {
+    duelLobbyMode = 'create';
+    duelSelectedSide = 'blue';
+    document.getElementById('lobby-title').textContent = 'CREAR SALA';
+    document.getElementById('lobby-confirm-btn').textContent = 'Crear Sala →';
+    document.getElementById('join-code-row').style.display = 'none';
+    document.getElementById('duel-name-input').value = localStorage.getItem('letrario_daily_name') || '';
+    resetSideSelector(false);
+    showScreen('duel-lobby');
+}
+
+function showDuelJoin() {
+    duelLobbyMode = 'join';
+    document.getElementById('lobby-title').textContent = 'UNIRSE A SALA';
+    document.getElementById('lobby-confirm-btn').textContent = 'Unirse →';
+    document.getElementById('join-code-row').style.display = 'flex';
+    document.getElementById('duel-name-input').value = localStorage.getItem('letrario_daily_name') || '';
+    resetSideSelector(false);
+    showScreen('duel-lobby');
+}
+
+function resetSideSelector(locked) {
+    const btnB = document.getElementById('side-btn-blue');
+    const btnR = document.getElementById('side-btn-red');
+    btnB.classList.toggle('locked', locked);
+    btnR.classList.toggle('locked', locked);
+}
+
+function selectSide(side) {
+    if (document.getElementById('side-btn-' + side).classList.contains('locked')) return;
+    duelSelectedSide = side;
+    document.getElementById('side-btn-blue').classList.toggle('selected', side === 'blue');
+    document.getElementById('side-btn-blue').classList.toggle('red',  false);
+    document.getElementById('side-btn-red').classList.toggle('selected', side === 'red');
+}
+
+function generateSalaCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    let code = '';
+    for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+}
+
+function copySalaCode() {
+    navigator.clipboard.writeText(document.getElementById('wait-sala-code').textContent);
+}
+
+async function confirmLobby() {
+    const name = document.getElementById('duel-name-input').value.trim();
+    if (!name) { document.getElementById('duel-name-input').style.borderColor = 'var(--red)'; return; }
+    localStorage.setItem('letrario_daily_name', name);
+
+    if (duelLobbyMode === 'create') {
+        await createDuelRoom(name, duelSelectedSide);
+    } else {
+        const code = document.getElementById('duel-join-code').value.trim().toUpperCase();
+        if (code.length !== 4) { document.getElementById('duel-join-code').style.borderColor = 'var(--red)'; return; }
+        await joinDuelRoom(name, code);
+    }
+}
+
+// ── FIREBASE ROOM MANAGEMENT ──────────────────────────────────
+async function createDuelRoom(name, side) {
+    const code = generateSalaCode();
+    duelState.salaCode = code;
+    duelState.myName = name;
+    duelState.mySide = side;
+    duelState.isCreator = true;
+
+    // Shared bag seed based on room code so both get same letters
+    const bagSeed = code.split('').reduce((h,c) => ((h<<5)-h)+c.charCodeAt(0)|0, 0);
+    const roomData = {
+        status: 'waiting',
+        creator: { name, side },
+        joiner: null,
+        power: 0,
+        bagSeed: Math.abs(bagSeed),
+        createdAt: Date.now(),
+    };
+
+    try {
+        await db.ref('letrario_duels/' + code).set(roomData);
+        // Auto-delete room on disconnect
+        db.ref('letrario_duels/' + code).onDisconnect().remove();
+
+        document.getElementById('wait-sala-code').textContent = code;
+        document.getElementById('wait-title').textContent = 'Sala Creada';
+        document.getElementById('wait-status').innerHTML = 'Comparte este código con tu rival.<br>Esperando que se una...';
+        document.getElementById('wait-opponent').style.display = 'none';
+        showScreen('duel-wait');
+
+        // Listen for joiner
+        duelState.firebaseRef = db.ref('letrario_duels/' + code);
+        duelState.firebaseRef.on('value', snap => {
+            const data = snap.val();
+            if (!data) return;
+            if (data.joiner && data.status === 'waiting') {
+                document.getElementById('wait-opponent').style.display = 'block';
+                document.getElementById('wait-opponent').textContent = `${data.joiner.name} se ha unido. ¡Comenzando!`;
+                setTimeout(() => launchDuel(data), 1500);
+            }
+            if (data.status === 'playing') launchDuel(data);
+        });
+    } catch(e) {
+        alert('Error creando sala: ' + e.message);
+    }
+}
+
+async function joinDuelRoom(name, code) {
+    try {
+        const snap = await db.ref('letrario_duels/' + code).once('value');
+        const data = snap.val();
+        if (!data) { alert('Sala no encontrada'); return; }
+        if (data.status !== 'waiting') { alert('La sala ya está en juego'); return; }
+
+        const joinerSide = data.creator.side === 'blue' ? 'red' : 'blue';
+        duelState.salaCode = code;
+        duelState.myName = name;
+        duelState.mySide = joinerSide;
+        duelState.isCreator = false;
+
+        // Lock side selector to show the forced side
+        duelSelectedSide = joinerSide;
+        document.getElementById('side-btn-blue').classList.toggle('selected', joinerSide === 'blue');
+        document.getElementById('side-btn-red').classList.toggle('selected', joinerSide === 'red');
+        document.getElementById('side-btn-blue').classList.add('locked');
+        document.getElementById('side-btn-red').classList.add('locked');
+
+        await db.ref('letrario_duels/' + code + '/joiner').set({ name, side: joinerSide });
+        await db.ref('letrario_duels/' + code + '/status').set('playing');
+
+        document.getElementById('wait-sala-code').textContent = code;
+        document.getElementById('wait-title').textContent = '¡Unido!';
+        document.getElementById('wait-status').innerHTML = `Te unes a la sala de ${data.creator.name}.<br>Comenzando...`;
+        showScreen('duel-wait');
+
+        duelState.firebaseRef = db.ref('letrario_duels/' + code);
+        duelState.firebaseRef.on('value', snap => {
+            const d = snap.val();
+            if (d && d.status === 'playing') launchDuel(d);
+        });
+    } catch(e) {
+        alert('Error al unirse: ' + e.message);
+    }
+}
+
+// ── LAUNCH DUEL ────────────────────────────────────────────────
+function launchDuel(data) {
+    if (duelLaunched) return;
+    duelLaunched = true;
+    // Stop listening for status changes (we'll set up power listener)
+    if (duelState.firebaseRef) duelState.firebaseRef.off();
+
+    const creatorName = data.creator.name;
+    const joinerName  = data.joiner ? data.joiner.name : '?';
+    const blueName  = data.creator.side === 'blue' ? creatorName : joinerName;
+    const redName   = data.creator.side === 'red'  ? creatorName : joinerName;
+
+    duelState.rivalName = duelState.mySide === 'blue' ? redName : blueName;
+    duelState.power = 0;
+    duelState.myScore = 0;
+    duelState.myWords = 0;
+    duelState.timerLeft = DUEL_DURATION;
+    duelState.milestone25Used = false;
+    duelState.milestone50Used = false;
+    duelState.nextWordDouble = false;
+    duelState.freezeActive = false;
+    duelState.discardMode = false;
+    duelState.discardsLeft = 4;
+    duelState.selectedIds = [];
+    duelState.upgrades = { handBonus: 0, valueBoost: false, posDouble: [], wordLevels: [0,0,0,0,0,0] };
+    // Same bag for both players — seeded from room code
+    const bagRNG = seededRNG(data.bagSeed || getDailySeed());
+    const duelPool = [];
+    for (let i = 0; i < 5; i++) duelPool.push(...LETTER_POOL);
+    duelState.bag = seededShuffle(duelPool, bagRNG).slice(0, 200); // plenty of letters
+    duelState.hand = [];
+
+    // Update labels
+    document.getElementById('duel-label-blue').textContent = '🔵 ' + blueName;
+    document.getElementById('duel-label-red').textContent  = redName + ' 🔴';
+
+    // Fill hand
+    duelFillHand();
+    renderDuelHand();
+    renderDuelBar();
+    updateDuelBuffBar();
+
+    showScreen('duel-game');
+    addDuelLog('⚔️ ¡El duelo comienza!', 'sys');
+
+    // Listen to Firebase power changes
+    db.ref('letrario_duels/' + duelState.salaCode + '/power').on('value', snap => {
+        const p = snap.val();
+        if (p !== null && p !== undefined) {
+            duelState.power = p;
+            renderDuelBar();
+            checkDuelWin();
+        }
+    });
+
+    // Listen to rival actions — only new entries after launch
+    const duelStartTs = Date.now();
+    db.ref('letrario_duels/' + duelState.salaCode + '/log')
+        .orderByChild('ts').startAt(duelStartTs)
+        .on('child_added', snap => {
+            const entry = snap.val();
+            if (entry && entry.side !== duelState.mySide) {
+                addDuelLog(`${entry.name}: +${entry.pts} pts`, entry.side);
+            }
+        });
+
+    // Listen for effects sent to me
+    db.ref('letrario_duels/' + duelState.salaCode + '/effects/' + duelState.mySide).on('child_added', snap => {
+        applyDuelEffect(snap.val());
+        snap.ref.remove();
+    });
+
+    // Listen for game over
+    db.ref('letrario_duels/' + duelState.salaCode + '/status').on('value', snap => {
+        if (snap.val() === 'gameover') endDuel('timeout');
+    });
+
+    // Start timer
+    duelState.timerInterval = setInterval(duelTick, 1000);
+}
+
+// ── GAME LOGIC ─────────────────────────────────────────────────
+function duelFillHand() {
+    const handSize = 7 + duelState.upgrades.handBonus;
+    while (duelState.hand.length < handSize && duelState.bag.length > 0) {
+        duelState.hand.push({ id: tileIdCounter++, letter: duelState.bag.pop(), chosenLetter: null });
+    }
+}
+
+function renderDuelHand() {
+    const el = document.getElementById('duel-hand');
+    if (!el) return;
+    el.innerHTML = '';
+    const ds = duelState;
+
+    ds.hand.forEach((tile, idx) => {
+        const div = document.createElement('div');
+        div.className = 'tile';
+        if (!tile.letter) {
+            div.classList.add('empty');
+        } else {
+            const displayLetter = tile.letter;
+            const displayVal = LETTER_VALUES[tile.letter] || 1;
+
+            div.textContent = displayLetter;
+
+            const val = document.createElement('div');
+            val.className = 'tile-val';
+            val.textContent = displayVal;
+            div.appendChild(val);
+
+            const isWild = tile.letter === '*';
+            if (isWild) {
+                div.classList.add('wildcard');
+                div.textContent = tile.chosenLetter || '✦';
+                const wv = document.createElement('div');
+                wv.className = 'tile-val';
+                wv.textContent = tile.chosenLetter ? (LETTER_VALUES[tile.chosenLetter] || 1) : '?';
+                div.appendChild(wv);
+            }
+            if (ds.discardMode) {
+                div.classList.add('discarding');
+                if (ds.selectedIds.includes(tile.id)) div.style.opacity = '0.4';
+                div.onclick = () => duelToggle(tile.id);
+            } else {
+                if (ds.selectedIds.includes(tile.id)) div.classList.add('selected');
+                div.onclick = () => {
+                    if (isWild && !tile.chosenLetter) openDuelPicker(tile.id);
+                    else duelToggle(tile.id);
+                };
+            }
+            addDragToTile(div, idx, ds.hand, renderDuelHand);
+        }
+        el.appendChild(div);
+    });
+
+    // Discard count badge
+    // Descartes ilimitados en duelo — sin contador
+
+    // Word display preview
+    const word = ds.selectedIds.map(id => { const t = ds.hand.find(h => h.id == id); return t ? effectiveDuelLetter(t) : null; }).filter(Boolean).join('');
+    const preview = document.getElementById('duel-score-preview');
+    const wordDisp = document.getElementById('duel-word-display');
+    if (word) {
+        let pts = calcDuelWordScore(word);
+        if (ds.nextWordDouble) pts *= 2;
+        preview.textContent = pts + ' poder';
+        wordDisp.innerHTML = '';
+        word.split('').forEach((letter, idx) => {
+            const div = document.createElement('div');
+            div.className = 'word-letter';
+            div.textContent = letter;
+            if (ds.upgrades.posDouble.includes(idx)) div.classList.add('pos-boosted');
+            const v = document.createElement('div');
+            v.className = 'letter-val';
+            v.textContent = LETTER_VALUES[letter] || 1;
+            div.appendChild(v);
+            wordDisp.appendChild(div);
+        });
+    } else {
+        preview.textContent = '';
+        wordDisp.innerHTML = `<div class="word-placeholder" style="font-family:'IM Fell English',serif;font-style:italic;font-size:14px;color:var(--text-dim);letter-spacing:2px">escribe tu encantamiento...</div>`;
+    }
+}
+
+function effectiveDuelLetter(tile) {
+    if (tile.letter === '*') return tile.chosenLetter || '*';
+    return tile.letter;
+}
+
+function duelToggle(id) {
+    id = parseFloat(id);
+    // In discard mode: toggle selection (highlighted in red), not immediate remove
+    const idx = duelState.selectedIds.indexOf(id);
+    if (idx === -1) duelState.selectedIds.push(id);
+    else duelState.selectedIds.splice(idx, 1);
+    renderDuelHand();
+}
+
+function duelClearWord() {
+    duelState.selectedIds = [];
+    renderDuelHand();
+}
+
+function duelShuffle() {
+    duelState.hand = shuffleArr(duelState.hand);
+    duelState.selectedIds = [];
+    renderDuelHand();
+}
+
+
+function openDuelPicker(tileId) {
+    const grid = document.getElementById('picker-grid');
+    grid.innerHTML = '';
+    document.getElementById('picker-title').textContent = '✦ Elige una letra para el comodín';
+    ALL_LETTERS.forEach(letter => {
+        const div = document.createElement('div');
+        div.className = 'picker-letter';
+        div.innerHTML = `${letter}<span class="pl-val">${LETTER_VALUES[letter]||1}</span>`;
+        div.onclick = () => chooseDuelLetter(tileId, letter);
+        grid.appendChild(div);
+    });
+    document.getElementById('letter-picker').classList.add('active');
+}
+
+function chooseDuelLetter(tileId, letter) {
+    const tile = duelState.hand.find(t => t.id == tileId);
+    if (tile) tile.chosenLetter = letter;
+    closePicker();
+    if (!duelState.selectedIds.includes(tileId)) duelState.selectedIds.push(tileId);
+    renderDuelHand();
+}
+
+function duelToggleDiscard() {
+    const ds = duelState;
+    ds.discardMode = !ds.discardMode;
+    ds.selectedIds = [];
+    renderDuelHand();
+    document.getElementById('duel-discard-hint').classList.toggle('visible', ds.discardMode);
+    const btn = document.getElementById('duel-discard-btn');
+    if (ds.discardMode) {
+        btn.onclick = duelConfirmDiscard;
+        btn.textContent = '✓ Confirmar';
+    } else {
+        btn.onclick = duelToggleDiscard;
+        btn.textContent = '✕ Descartar';
+    }
+}
+
+function duelConfirmDiscard() {
+    const ds = duelState;
+    const btn = document.getElementById('duel-discard-btn');
+    if (ds.selectedIds.length === 0) {
+        // Sin selección: cancelar
+        ds.discardMode = false;
+        btn.onclick = duelToggleDiscard;
+        btn.textContent = '✕ Descartar';
+        document.getElementById('duel-discard-hint').classList.remove('visible');
+        renderDuelHand();
+        return;
+    }
+    ds.hand = ds.hand.filter(t => !ds.selectedIds.includes(t.id));
+    ds.discardsLeft--;
+    ds.selectedIds = [];
+    ds.discardMode = false;
+    btn.onclick = duelToggleDiscard;
+    btn.textContent = '✕ Descartar';
+    document.getElementById('duel-discard-hint').classList.remove('visible');
+    duelFillHand();
+    addDuelLog(`Descarte (${ds.discardsLeft} restantes)`, 'sys');
+    renderDuelHand();
+}
+
+
+function calcDuelWordScore(word) {
+    const ds = duelState;
+    let score = 0;
+    for (let i = 0; i < word.length; i++) {
+        let val = LETTER_VALUES[word[i]] || 1;
+        if (ds.upgrades.valueBoost && val === 1) val = 2;
+        if (ds.upgrades.posDouble.includes(i)) val *= 2;
+        score += val;
+    }
+    // Word level bonus
+    const lenIdx = Math.min(word.length - 2, 5);
+    const lvl = ds.upgrades.wordLevels[lenIdx] || 0;
+    if (lvl > 0 && WORD_LEVEL_TABLE[lenIdx] && WORD_LEVEL_TABLE[lenIdx][lvl]) {
+        const { mult, bonus } = WORD_LEVEL_TABLE[lenIdx][lvl];
+        score = score * mult + bonus;
+    }
+    return score;
+}
+
+async function duelPlayWord() {
+    if (duelState.freezeActive) {
+        duelFeedback('❄️ ¡Estás congelado!', 'error');
+        return;
+    }
+    const ids = duelState.selectedIds;
+    if (ids.length < 2) { duelFeedback('Mínimo 2 letras', 'error'); return; }
+
+    const word = ids.map(id => { const t = duelState.hand.find(h => h.id == id); return t ? effectiveDuelLetter(t) : null; }).filter(Boolean).join('');
+    if (!word) return;
+
+    // Validate word
+    const valid = await isValidWord(word);
+    if (!valid) { duelFeedback(`"${word}" no existe`, 'error'); return; }
+
+    let pts = calcDuelWordScore(word);
+    if (duelState.nextWordDouble) { pts *= 2; duelState.nextWordDouble = false; }
+
+    duelState.myScore += pts;
+    duelState.myWords++;
+
+    // Remove used tiles, fill hand
+    duelState.hand = duelState.hand.filter(t => !ids.includes(t.id));
+    duelState.selectedIds = [];
+    duelFillHand();
+    renderDuelHand();
+
+    duelFeedback(`+${pts} poder`, 'ok');
+    addDuelLog(`Tú: "${word}" +${pts}`, duelState.mySide);
+
+    // Update Firebase power (transaction to avoid race conditions)
+    const delta = duelState.mySide === 'blue' ? pts : -pts;
+    await db.ref('letrario_duels/' + duelState.salaCode + '/power').transaction(current => {
+        const newVal = (current || 0) + delta;
+        return Math.max(-DUEL_WIN_POWER, Math.min(DUEL_WIN_POWER, newVal));
+    });
+
+    // Log to Firebase for rival to see
+    await db.ref('letrario_duels/' + duelState.salaCode + '/log').push({
+        side: duelState.mySide, name: duelState.myName, pts, ts: Date.now()
+    });
+
+    // Check milestones
+    checkDuelMilestones();
+}
+
+function duelFeedback(msg, type) {
+    const el = document.getElementById('duel-feedback');
+    el.textContent = msg;
+    el.style.color = type === 'ok' ? 'var(--green)' : type === 'error' ? 'var(--red)' : 'var(--gold)';
+    setTimeout(() => { el.textContent = 'escribe tu encantamiento...'; el.style.color = ''; }, 1800);
+}
+
+function addDuelLog(msg, side) {
+    _appendToLog('duel-log', msg, 'duel-log-entry ' + (side || 'sys'));
+}
+
+function _appendToLog(logId, msg, className) {
+    const log = document.getElementById(logId);
+    if (!log) return;
+    const el = document.createElement('div');
+    el.className = className;
+    el.textContent = msg;
+    log.appendChild(el);
+    log.scrollTop = log.scrollHeight;
+}
+
+function renderDuelBar() {
+    const p = duelState.power; // -100 to 100
+    // Blue occupies left side: 50% base + up to 50% more when winning
+    // Red occupies right side: 50% base + up to 50% more when winning
+    const blueW = 50 + (p / DUEL_WIN_POWER) * 50;  // 0% (red wins) to 100% (blue wins)
+    const redW  = 50 - (p / DUEL_WIN_POWER) * 50;   // 0% (blue wins) to 100% (red wins)
+    document.getElementById('duel-fill-blue').style.width = blueW + '%';
+    document.getElementById('duel-fill-red').style.width  = redW + '%';
+    document.getElementById('duel-bar-value').textContent = p > 0 ? `🔵 +${p}` : p < 0 ? `🔴 ${Math.abs(p)}` : '⚔';
+}
+
+function updateDuelBuffBar() {
+    const bar = document.getElementById('duel-buff-bar');
+    if (!bar) return;
+    const buffs = [];
+    if (duelState.upgrades.handBonus > 0) buffs.push([`✋+${duelState.upgrades.handBonus}`, 'Mano Grande']);
+    if (duelState.upgrades.valueBoost) buffs.push(['⬆️Val', 'Valor Mejorado']);
+    duelState.upgrades.posDouble.forEach(p => buffs.push([`×2[${p+1}]`, `Posición ${p+1} ×2`]));
+    if (duelState.nextWordDouble) buffs.push(['×2próx', 'Próxima palabra vale el doble', 'color:var(--gold)']);
+    if (duelState.freezeActive) buffs.push(['❄️', 'Congelado']);
+    bar.innerHTML = buffs.map(([l, tip, sty]) =>
+        `<span class="buff-tag" title="${tip}" style="cursor:help;${sty||''}">${l}</span>`
+    ).join('');
+}
+
+// ── MILESTONES & CARDS ─────────────────────────────────────────
+function checkDuelMilestones() {
+    const p = duelState.power;
+    const myAdvantage = duelState.mySide === 'blue' ? p : -p;
+
+    if (!duelState.milestone25Used && myAdvantage >= 25) {
+        duelState.milestone25Used = true;
+        showDuelCards('⚡ ¡Punto de Poder! (25)', 'Ventaja conseguida — elige tu baza:');
+    } else if (!duelState.milestone50Used && myAdvantage >= 50) {
+        duelState.milestone50Used = true;
+        showDuelCards('💥 ¡Dominio Absoluto! (50)', 'La mitad conquistada — tu poder es grande:');
+    }
+}
+
+function showDuelCards(title, subtitle) {
+    document.getElementById('duel-card-title').textContent = title;
+    document.getElementById('duel-card-subtitle').textContent = subtitle;
+
+    // Pick 1 buff + 1 debuff randomly
+    const buff   = DUEL_CARDS.buff[Math.floor(Math.random() * DUEL_CARDS.buff.length)];
+    const debuff = DUEL_CARDS.debuff[Math.floor(Math.random() * DUEL_CARDS.debuff.length)];
+
+    document.getElementById('duel-card-options').innerHTML = `
+        <div class="duel-card buff" onclick="chooseDuelCard('buff', '${buff.id}')">
+            <div class="card-emoji">${buff.emoji}</div>
+            <div class="card-name">${buff.name}</div>
+            <div class="card-desc">${buff.desc}</div>
+        </div>
+        <div class="duel-card debuff" onclick="chooseDuelCard('debuff', '${debuff.id}')">
+            <div class="card-emoji">${debuff.emoji}</div>
+            <div class="card-name">${debuff.name}</div>
+            <div class="card-desc">${debuff.desc}</div>
+        </div>
+    `;
+    showModal('duel-card');
+}
+
+async function chooseDuelCard(type, cardId) {
+    hideAllModals();
+
+    if (type === 'buff') {
+        applyDuelBuff(cardId);
+    } else {
+        // Send debuff effect to rival via Firebase
+        const rivalSide = duelState.mySide === 'blue' ? 'red' : 'blue';
+        await db.ref(`letrario_duels/${duelState.salaCode}/effects/${rivalSide}`).push({ id: cardId, ts: Date.now() });
+    }
+}
+
+function applyDuelBuff(id) {
+    const ds = duelState;
+    if (id === 'buff_hand') {
+        for (let i = 0; i < 2; i++) {
+            if (ds.bag.length > 0) ds.hand.push({ id: Date.now() + Math.random(), letter: ds.bag.pop(), selected: false });
+        }
+        renderDuelHand();
+        addDuelLog('✋ +2 letras robadas', ds.mySide);
+    } else if (id === 'buff_double') {
+        ds.nextWordDouble = true;
+        updateDuelBuffBar();
+        addDuelLog('×2 Próxima palabra vale el doble', ds.mySide);
+    } else if (id === 'buff_discard') {
+        ds.discardsLeft = Math.min(8, ds.discardsLeft + 2);
+        renderDuelHand();
+        addDuelLog('♻️ +2 descartes recuperados', ds.mySide);
+    }
+}
+
+function applyDuelEffect(effect) {
+    if (!effect) return;
+    const ds = duelState;
+    if (effect.id === 'debuff_freeze') {
+        ds.freezeActive = true;
+        updateDuelBuffBar();
+        addDuelLog('❄️ ¡El rival te ha congelado! Pierdes 1 turno.', ds.mySide);
+        setTimeout(() => {
+            ds.freezeActive = false;
+            updateDuelBuffBar();
+            addDuelLog('❄️ Descongelado', ds.mySide);
+        }, 8000);
+    } else if (effect.id === 'debuff_steal') {
+        const stolen = 10;
+        db.ref('letrario_duels/' + ds.salaCode + '/power').transaction(current => {
+            const delta = ds.mySide === 'blue' ? -stolen : stolen;
+            return Math.max(-DUEL_WIN_POWER, Math.min(DUEL_WIN_POWER, (current || 0) + delta));
+        });
+        addDuelLog(`💀 ¡El rival te robó ${stolen} de poder!`, 'sys');
+    } else if (effect.id === 'debuff_shuffle') {
+        ds.hand = shuffleArr(ds.hand);
+        ds.selectedIds = [];
+        renderDuelHand();
+        addDuelLog('🌀 ¡El rival revolvió tu mano!', 'sys');
+    } else if (effect.id === 'debuff_burn') {
+        if (ds.hand.length > 0) {
+            const idx = Math.floor(Math.random() * ds.hand.length);
+            const orig = ds.hand[idx].letter;
+            ds.hand[idx].letter = '🔥';
+            renderDuelHand();
+            addDuelLog('🔥 ¡Una ficha quemada por el rival!', 'sys');
+            setTimeout(() => {
+                if (ds.hand[idx]) ds.hand[idx].letter = orig;
+                renderDuelHand();
+            }, 10000);
+        }
+    }
+}
+
+// ── TIMER & END ────────────────────────────────────────────────
+function duelTick() {
+    duelState.timerLeft--;
+    const m = Math.floor(duelState.timerLeft / 60);
+    const s = duelState.timerLeft % 60;
+    const el = document.getElementById('duel-timer');
+    if (el) {
+        el.textContent = `${m}:${String(s).padStart(2,'0')}`;
+        el.style.color = duelState.timerLeft <= 30 ? 'var(--red)' : 'var(--gold)';
+    }
+    if (duelState.timerLeft <= 0) {
+        clearInterval(duelState.timerInterval);
+        // Creator declares game over
+        if (duelState.isCreator) {
+            db.ref('letrario_duels/' + duelState.salaCode + '/status').set('gameover');
+        }
+        endDuel('timeout');
+    }
+}
+
+function checkDuelWin() {
+    const p = duelState.power;
+    if (p >= DUEL_WIN_POWER) { clearInterval(duelState.timerInterval); endDuel('win_blue'); }
+    else if (p <= -DUEL_WIN_POWER) { clearInterval(duelState.timerInterval); endDuel('win_red'); }
+}
+
+function endDuel(reason) {
+    duelLaunched = false;
+    clearInterval(duelState.timerInterval);
+    if (duelState.firebaseRef) duelState.firebaseRef.off();
+    db.ref('letrario_duels/' + duelState.salaCode).off();
+
+    const p = duelState.power;
+    const myWin = reason === 'timeout'
+        ? (duelState.mySide === 'blue' ? p > 0 : p < 0)
+        : (reason === 'win_blue' ? duelState.mySide === 'blue' : duelState.mySide === 'red');
+
+    const isDraw = reason === 'timeout' && p === 0;
+
+    document.getElementById('duel-result-emoji').textContent = isDraw ? '⚖️' : myWin ? '🏆' : '💀';
+    document.getElementById('duel-result-title').textContent = isDraw ? 'Empate' : myWin ? '¡Victoria!' : 'Derrota';
+    document.getElementById('duel-result-sub').textContent  = reason === 'timeout' ? 'Tiempo agotado' : myWin ? 'Has completado la invocación' : 'El rival completó la invocación';
+    document.getElementById('duel-result-stats').innerHTML = `
+        <div class="result-stat-row"><span>Tu poder total</span><span>${duelState.myScore} pts</span></div>
+        <div class="result-stat-row"><span>Palabras malditas</span><span>${duelState.myWords}</span></div>
+        <div class="result-stat-row"><span>Barra final</span><span>${p > 0 ? '+' : ''}${p}</span></div>
+    `;
+    showModal('duel-result');
+}
+
+function abandonDuel() {
+    duelLaunched = false;
+    if (duelState.salaCode) {
+        db.ref('letrario_duels/' + duelState.salaCode).remove();
+        db.ref('letrario_duels/' + duelState.salaCode).off();
+    }
+    clearInterval(duelState.timerInterval);
+    showScreen('start');
+}
+
+function shareDuelResult() {
+    const ds = duelState;
+    const myWin = document.getElementById('duel-result-title').textContent.includes('Victoria');
+    const txt = [
+        '⚔️ LETRARIO — Duelo',
+        '',
+        myWin ? '🏆 ¡Victoria en el Duelo!' : '💀 Derrota en el Duelo',
+        '',
+        `🩸 Mi poder: ${ds.myScore} pts`,
+        `✒️  Palabras malditas: ${ds.myWords}`,
+        `📊 Barra final: ${ds.power > 0 ? '+' : ''}${ds.power}`,
+        '',
+        '¿Me retas?',
+        '👉 https://bit.ly/letrario',
+    ].join('\n');
+
+    const btn = document.getElementById('share-btn-duel');
+    navigator.clipboard.writeText(txt).then(() => {
+        btn.textContent = '✓ ¡Copiado!';
+        setTimeout(() => btn.textContent = '📜 Compartir resultado', 2500);
+    });
+}
+
+// ============================================================
+//  MODO DIARIO
+// ============================================================
+
+// Seeded RNG (mulberry32)
+function seededRNG(seed) {
+    return function() {
+        seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+        let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+}
+
+function getDailySeed() {
+    const d = new Date();
+    const str = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash |= 0; }
+    return Math.abs(hash);
+}
+
+function getDailyDateStr() {
+    return new Date().toLocaleDateString('es-ES', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+
+function getDailyKey() {
+    const d = new Date();
+    return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function seededShuffle(arr, rng) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+const DAILY_SHOP_IDS = [
+    'hand_large','recycle_extra','pos1','pos2','pos3','pos4','pos5','pos6','pos7',
+    'pos123','pos456','value_boost','shop_size','cincel'
+];
+
+function getDailyShopOffers(visitIndex, rng) {
+    const available = SHOP_ITEMS.filter(i => DAILY_SHOP_IDS.includes(i.id));
+    const shuffled = seededShuffle(available, rng);
+    const start = (visitIndex * 3) % shuffled.length;
+    const picks = [];
+    for (let i = 0; picks.length < 3; i++) {
+        picks.push(shuffled[(start + i) % shuffled.length]);
+    }
+    return picks;
+}
+
+// Daily mode state (reset on each daily game start)
+const dailyCtx = {
+    shopRNG: null,
+    shopVisit: 0,
+    lastShopAt: 0,
+    playerName: '',
+    rankEntries: [],
+};
+// Aliases for readability (used throughout)
+let dailyShopRNG = null;
+let dailyShopVisit = 0;
+let dailyLastShopAt = 0;
+let dailyPlayerName = '';
+let dailyRankEntries = [];
+
+function openDailyNameModal() {
+    const stored = localStorage.getItem('letrario_daily_name') || '';
+    document.getElementById('daily-name-input').value = stored;
+    document.getElementById('daily-date-label').textContent = getDailyDateStr().toUpperCase();
+    showModal('daily-name');
+}
+
+function startDailyMode() {
+    const name = document.getElementById('daily-name-input').value.trim();
+    if (!name) {
+        document.getElementById('daily-name-input').style.borderColor = 'var(--red)';
+        return;
+    }
+    localStorage.setItem('letrario_daily_name', name);
+    dailyPlayerName = name;
+    hideAllModals();
+
+    const seed = getDailySeed();
+    const rng = seededRNG(seed);
+    dailyShopRNG = seededRNG(seed + 999);
+    dailyShopVisit = 0;
+    dailyLastShopAt = 0;
+    dailyRankEntries = [];
+
+    // Build 100-letter bag seeded
+    const pool = [];
+    for (let i = 0; i < 10; i++) pool.push(...LETTER_POOL);
+    const bag = seededShuffle(pool, rng).slice(0, 100);
+
+    gameState = freshState();
+    gameState.dailyMode = true;
+    gameState.bag = bag;
+    gameState.goal = 99999;
+    gameState.jugadas = CONFIG.BASE_JUGADAS;
+    gameState.jugadasLeft = CONFIG.BASE_JUGADAS;
+    gameState.discards = CONFIG.BASE_DISCARDS;
+    gameState.discardsLeft = CONFIG.BASE_DISCARDS;
+
+    // Init hand slots (freshState gives [] so fillHand needs slots to fill)
+    const handSz = CONFIG.HAND_SIZE + gameState.upgrades.handBonus;
+    gameState.hand = Array.from({length: handSz}, () => makeTile(null));
+    fillHand();
+    renderAll();
+    renderCurseBar();
+    renderBuffBar();
+    renderHUD(); // daily HUD update
+    document.getElementById('btn-surrender').style.display = 'block';
+    showScreen('game');
+    addLog('☠ MODO DIARIO — 100 letras — A por el máximo', 'sys');
+}
+
+
+function surrenderDaily() {
+    if (!gameState || !gameState.dailyMode) return;
+    if (!confirm('¿Seguro que quieres rendirte? Se guardará tu puntuación actual.')) return;
+    endDailyMode();
+}
+
+
+function checkDailyShop() {
+    if (!gameState || !gameState.dailyMode) return false;
+    if (gameState.totalScore >= dailyLastShopAt + CONFIG.DAILY_SHOP_THRESHOLD) {
+        dailyLastShopAt += CONFIG.DAILY_SHOP_THRESHOLD;
+        setTimeout(openDailyShop, 600);
+        return true;
+    }
+    return false;
+}
+
+function openDailyShop() {
+    const gs = gameState;
+    gs.shopVisits++;
+    const offers = getDailyShopOffers(dailyShopVisit, dailyShopRNG);
+    dailyShopVisit++;
+    gs._dailyOffers = offers;
+
+    document.getElementById('shop-sub').textContent = `☠ Modo Diario · ${gs.coins} esencia`;
+    document.getElementById('shop-coins').textContent = gs.coins + ' 🪙';
+
+    const grid = document.getElementById('shop-grid');
+    grid.innerHTML = offers.map((item, idx) => {
+        const canAfford = gs.coins >= item.price;
+        const cls = !canAfford ? 'cant-afford' : '';
+        return `<div class="shop-item ${cls}" onclick="buyDailyItem(${idx})">
+            <div class="shop-item-icon emoji-icon">${item.emoji}</div>
+            <div class="shop-item-body">
+                <div class="shop-item-name">${item.name}</div>
+                <div class="shop-item-desc">${item.desc}</div>
+            </div>
+            <div class="shop-item-price">${item.price}🪙</div>
+        </div>`;
+    }).join('');
+
+    showModal('shop');
+}
+
+function buyDailyItem(idx) {
+    const gs = gameState;
+    const item = gs._dailyOffers[idx];
+    if (!item || gs.coins < item.price) return;
+    gs.coins -= item.price;
+    item.apply(gs);
+    renderBuffBar();
+    openDailyShop(); // re-render
+}
+
+function closeDailyShop() {
+    hideAllModals();
+    const gs = gameState;
+    // Refill hand in case handBonus changed
+    const handSize = CONFIG.HAND_SIZE + gs.upgrades.handBonus;
+    while (gs.hand.filter(t => t.letter).length < handSize && gs.bag.length > 0) {
+        const slot = gs.hand.find(t => t.letter === null);
+        if (slot) slot.letter = gs.bag.pop();
+        else gs.hand.push({ id: Date.now() + Math.random(), letter: gs.bag.pop(), chosenLetter: null });
+    }
+    renderAll();
+    renderBuffBar();
+    renderHUD(); // daily HUD update
+    // Check if out of letters after closing shop
+    const hasLetters = gs.hand.some(t => t.letter !== null) || gs.bag.length > 0;
+    if (!hasLetters) setTimeout(endDailyMode, 400);
+}
+
+async function endDailyMode() {
+    const gs = gameState;
+    deleteSave();
+
+    const dateKey = getDailyKey();
+    const safeKey = dailyPlayerName.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ]/g, '_').slice(0, 20);
+    const entry = { name: dailyPlayerName, score: gs.totalScore, words: gs.totalWords, ts: Date.now() };
+
+    try {
+        await db.ref(`letrario_daily/${dateKey}/${safeKey}`).transaction(current => {
+            if (!current || entry.score >= current.score) return entry;
+            return undefined;
+        });
+    } catch(e) { console.error('Daily save error:', e); }
+
+    // Load rank
+    let rankStr = '?';
+    try {
+        const snap = await db.ref(`letrario_daily/${dateKey}`).orderByChild('score').once('value');
+        const entries = [];
+        snap.forEach(c => entries.push(c.val()));
+        entries.sort((a,b) => b.score - a.score);
+        dailyRankEntries = entries;
+        const pos = entries.findIndex(e => e.name === dailyPlayerName);
+        rankStr = pos >= 0 ? `#${pos+1} de ${entries.length}` : `#${entries.length}`;
+    } catch(e) {}
+
+    document.getElementById('daily-over-emoji').textContent = gs.totalScore >= 300 ? '🏆' : gs.totalScore >= 150 ? '📖' : '💀';
+    document.getElementById('daily-over-title').textContent = gs.totalScore >= 300 ? '¡Ritual Magistral!' : gs.totalScore >= 150 ? 'Buen Ritual' : 'El Ritual Concluye';
+    document.getElementById('daily-over-sub').textContent = getDailyDateStr().toUpperCase();
+    document.getElementById('daily-over-stats').innerHTML = `
+        <div class="result-stat-row"><span>Poder acumulado</span><span>${gs.totalScore} pts</span></div>
+        <div class="result-stat-row"><span>Palabras malditas</span><span>${gs.totalWords}</span></div>
+        <div class="result-stat-row"><span>Esencia restante</span><span>${gs.coins} 🪙</span></div>
+    `;
+    document.getElementById('daily-rank-box').style.display = 'block';
+    document.getElementById('daily-rank-value').textContent = rankStr;
+    showModal('daily-over');
+}
+
+function showDailyLeaderboard() {
+    hideModal('daily-over');
+    document.getElementById('board-date-label').textContent = getDailyDateStr().toUpperCase();
+    renderLeaderboard(dailyRankEntries);
+    showModal('daily-board');
+}
+
+function renderLeaderboard(entries) {
+    const list = document.getElementById('board-list');
+    if (!entries || entries.length === 0) {
+        list.innerHTML = '<div style="text-align:center;color:var(--aged);font-family:Cinzel,serif;font-size:12px;padding:20px;font-style:italic">Nadie ha jugado hoy todavía</div>';
+        return;
+    }
+    const medals = ['🥇','🥈','🥉'];
+    list.innerHTML = entries.map((e, i) => {
+        const isMe = e.name === dailyPlayerName;
+        const medal = medals[i] || `${i+1}.`;
+        return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;
+            background:${isMe ? 'rgba(200,146,42,0.1)' : 'rgba(200,146,42,0.03)'};
+            border:1px solid ${isMe ? 'rgba(200,146,42,0.4)' : 'rgba(200,146,42,0.12)'};
+            border-radius:4px;">
+            <span style="font-size:18px;width:28px;text-align:center">${medal}</span>
+            <span style="flex:1;font-family:'Cinzel',serif;font-size:13px;color:${isMe ? 'var(--gold-light)' : 'var(--text)'}">${e.name}${isMe ? ' ◀' : ''}</span>
+            <span style="font-family:'Cinzel Decorative',serif;font-size:16px;color:var(--gold)">${e.score}</span>
+            <span style="font-family:'Cinzel',serif;font-size:10px;color:var(--aged)">${e.words}p</span>
+        </div>`;
+    }).join('');
+}
+
+function shareDailyResult() {
+    const gs = gameState;
+    const rank = document.getElementById('daily-rank-value').textContent || '?';
+    const stars = gs.totalScore >= 400 ? '⭐⭐⭐' : gs.totalScore >= 200 ? '⭐⭐' : '⭐';
+    const txt = [
+        `📜 LETRARIO — Modo Diario`,
+        getDailyDateStr(),
+        ``,
+        stars,
+        ``,
+        `🩸 Poder: ${gs.totalScore} pts`,
+        `✒️  Palabras malditas: ${gs.totalWords}`,
+        `🏆 Posición: ${rank}`,
+        ``,
+        `¿Puedes superarme?`,
+        `👉 https://bit.ly/letrario`,
+    ].join('\n');
+
+    const btn = document.getElementById('share-btn-daily');
+    navigator.clipboard.writeText(txt).then(() => {
+        btn.textContent = '✓ ¡Copiado!';
+        btn.style.color = 'var(--green)'; btn.style.borderColor = 'var(--green)';
+        setTimeout(() => { btn.textContent = '📜 Compartir resultado'; btn.style.color = '#e8b08a'; btn.style.borderColor = '#e8b08a'; }, 2500);
+    }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = txt; ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        btn.textContent = '✓ ¡Copiado!';
+        setTimeout(() => btn.textContent = '📜 Compartir resultado', 2500);
+    });
+}
+
+async function deleteSave() {
+    const gs = gameState;
+    if (!gs._saveCode) return;
+    try {
+        await db.ref(`palabrarogue_saves/${gs._saveCode}`).remove();
+        gs._saveCode = null;
+    } catch(e) { /* silencioso */ }
+}
+
+async function saveToFirebase() {
+    const gs = gameState;
+    const saveData = {
+        v: 1,
+        ts: Date.now(),
+        level: gs.level,
+        round: gs.round,
+        coins: gs.coins,
+        totalScore: gs.totalScore,
+        totalWords: gs.totalWords,
+        shopVisits: gs.shopVisits || 0,
+        upgrades: gs.upgrades,
+        levelBonuses: gs.levelBonuses,
+    };
+
+    const btn = document.getElementById('btn-save-firebase');
+    const codeDisplay = document.getElementById('seed-display');
+    const saveArea = document.getElementById('save-seed-area');
+
+    btn.textContent = 'Guardando...';
+    btn.disabled = true;
+
+    try {
+        // Intentar hasta encontrar un código libre
+        let code, ref;
+        for (let attempt = 0; attempt < 5; attempt++) {
+            code = generateCode();
+            ref = db.ref(`palabrarogue_saves/${code}`);
+            const snap = await ref.once('value');
+            if (!snap.exists()) break;
+        }
+        await ref.set(saveData);
+        gs._saveCode = code;
+        codeDisplay.textContent = code;
+        saveArea.style.display = 'block';
+        btn.textContent = '✓ Guardado';
+    } catch(e) {
+        btn.textContent = '✗ Error al guardar';
+        btn.disabled = false;
+        console.error(e);
+    }
+}
+
+async function loadFromFirebase(code) {
+    code = code.trim().toUpperCase();
+    if (code.length !== 6) return { ok: false, msg: 'El código debe tener 6 caracteres' };
+    try {
+        const snap = await db.ref(`palabrarogue_saves/${code}`).once('value');
+        if (!snap.exists()) return { ok: false, msg: 'Código no encontrado' };
+        const data = snap.val();
+        if (!data.v) return { ok: false, msg: 'Código inválido' };
+
+        gameState = freshState();
+        gameState.level = data.level || 1;
+        gameState.round = data.round || 1;
+        gameState.coins = data.coins || 0;
+        gameState.totalScore = data.totalScore || 0;
+        gameState.totalWords = data.totalWords || 0;
+        gameState.shopVisits = data.shopVisits || 0;
+        gameState.upgrades = { ...freshState().upgrades, ...data.upgrades };
+        gameState.levelBonuses = { ...freshState().levelBonuses, ...data.levelBonuses };
+        gameState._saveCode = code; // para borrarlo al terminar
+        return { ok: true };
+    } catch(e) {
+        return { ok: false, msg: 'Error de conexión' };
+    }
+}
+
+window.addEventListener('load', () => { loadDictionary(); });
+</script>
+<script>
+// Partículas flotantes
+(function() {
+    for (let i = 0; i < 18; i++) {
+        const p = document.createElement('div');
+        p.style.cssText = `
+            position:fixed;
+            width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;
+            background:var(--gold);border-radius:50%;opacity:0;
+            left:${Math.random()*100}vw;top:${Math.random()*100}vh;
+            pointer-events:none;z-index:998;
+            animation:particleFloat ${5+Math.random()*8}s ${Math.random()*8}s ease-in-out infinite;
+        `;
+        document.body.appendChild(p);
+    }
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes particleFloat {
+            0%   { opacity:0; transform:translateY(0) scale(0.5); }
+            20%  { opacity:0.5; }
+            80%  { opacity:0.2; }
+            100% { opacity:0; transform:translateY(-100px) scale(0); }
+        }
+    `;
+    document.head.appendChild(style);
+})();
+</script>
+</body>
+</html>
