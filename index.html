@@ -574,7 +574,15 @@
         .btn-discard-mode:hover:not(:disabled) { background: rgba(139,26,26,0.12); }
         .btn-discard-mode.active { background: rgba(139,26,26,0.15); border-color: var(--red); }
 
-        .counter-badge {
+        .btn-surrender {
+            background: transparent;
+            color: #e05050;
+            border: 1px dashed #c03030;
+            font-size: 11px;
+            padding: 9px 18px;
+            display: none;
+        }
+        .btn-surrender:hover { border-style: solid; background: rgba(139,26,26,0.2); color: #ff6060; }
             font-family: 'Cinzel', serif;
             font-size: 17px;
             color: var(--text-dim);
@@ -1453,9 +1461,9 @@
                 <button id="btn-cincel" class="btn btn-cincel" onclick="toggleCincelMode()" style="display:none">🔨 Cincel</button>
                 <button class="btn btn-discard-mode" id="btn-discard" onclick="toggleDiscardMode()">✕ Descartar</button>
                 <span class="counter-badge" id="discard-count"></span>
+                <button id="btn-surrender" class="btn btn-surrender" onclick="surrenderDaily()">☠ Rendirse</button>
             </div>
             <div class="bag-info" id="bag-info"></div>
-            <button id="btn-surrender" onclick="surrenderDaily()" style="display:none;margin-top:6px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:var(--text-dim);border:1px solid var(--border);background:none;padding:6px 16px;border-radius:3px;cursor:pointer;opacity:0.6">☠ Rendirse</button>
         </div>
 
         <!-- LOG -->
@@ -1707,11 +1715,17 @@ const SHOP_ITEMS = [
         }
     },
     {
-        id: 'recycle_extra', name: 'Reciclaje Extra', emoji: '♻️',
-        desc: '+1 descarte permanente. Máximo 5 descartes en total.',
+        id: 'alquimia', name: 'Alquimia', emoji: '⚗️',
+        desc: 'Convierte toda tu esencia en poder (1🪙 = 2 poder). Se puede comprar cada visita.',
         price: 2, weight: 4,
-        canBuy: gs => gs.upgrades.extraDiscards < 4,
-        apply: gs => gs.upgrades.extraDiscards++
+        canBuy: gs => gs.coins > 0,
+        apply: gs => {
+            if (gs.dailyMode) {
+                gs.totalScore += gs.coins * 2;
+                gs.score += gs.coins * 2;
+            }
+            gs.coins = 0;
+        }
     },
     {
         id: 'round_extra', name: 'Ronda Extra', emoji: '🃏',
@@ -1799,11 +1813,11 @@ const SHOP_ITEMS = [
         apply: gs => gs.upgrades.freeShortWords = true
     },
     {
-        id: 'shop_size', name: 'Tamaño de Tienda', emoji: '🏪',
-        desc: 'La tienda ofrece 4 mejoras en lugar de 3. Permanente.',
-        price: 10, weight: 2,
-        canBuy: gs => !gs.upgrades.shopSize,
-        apply: gs => gs.upgrades.shopSize = true
+        id: 'comodin_extra', name: 'Comodín Extra', emoji: '🃏',
+        desc: 'Añade 1 ficha comodín (✦) a tu bolsa. Se puede comprar varias veces.',
+        price: 5, weight: 2,
+        canBuy: gs => true,
+        apply: gs => { gs.bag.push('*'); }
     },
     {
         id: 'value_boost', name: 'Valor Mejorado', emoji: '⬆️',
@@ -2103,6 +2117,7 @@ function freshState() {
         shopBoughtIds: [],
         shopVisits: 0,
         extraBagLetters: [],
+        usedCurseIds: [],   // curses already used by previous bosses — never repeated
         secretWord: null,
         secretBonus: 0,
         secretReveal: '',
@@ -2394,7 +2409,9 @@ function applyBossCurses(gs) {
     clearCurses(gs);
     const level = gs.level;
     const numCurses = level === 3 ? 2 : 1;
-    const available = BOSS_CURSES.filter(c => c.weight[level - 1] > 0);
+    const available = BOSS_CURSES.filter(c =>
+        c.weight[level - 1] > 0 && !gs.usedCurseIds.includes(c.id)
+    );
     const selected = [];
     const pool = [...available];
     while (selected.length < numCurses && pool.length > 0) {
@@ -2404,6 +2421,7 @@ function applyBossCurses(gs) {
     }
     selected.forEach(curse => {
         gs.curses.active.push(curse.id);
+        gs.usedCurseIds.push(curse.id);   // mark as used for future bosses
         curse.apply(gs);
     });
 }
@@ -2948,7 +2966,11 @@ function playWord() {
     gs.totalWords++;
     // Diccionario Libre: palabras ≤3 letras no gastan jugada
     if (!gs.dailyMode && !(gs.upgrades.freeShortWords && word.length <= 2)) gs.jugadasLeft--;
-    if (gs.dailyMode) gs.coins += 1;
+    if (gs.dailyMode) {
+        const wordLen = word.length;
+        const earned = wordLen >= 5 ? 3 : wordLen >= 3 ? 2 : 1;
+        gs.coins += earned;
+    }
 
     // Quitar fichas usadas
     gs.selectedIds.forEach(id => {
@@ -3478,14 +3500,14 @@ const DUEL_WIN_POWER = 100;
 const DUEL_CARDS = {
     buff: [
         { id: 'buff_hand',    emoji: '✋', name: '+2 Letras',      desc: 'Roba 2 letras extra para tu mano ahora mismo.' },
-        { id: 'buff_jugada',  emoji: '⚡', name: '+3 Jugadas',     desc: 'Gana 3 jugadas extra este turno.' },
+        { id: 'buff_shield',  emoji: '🛡️', name: 'Escudo',          desc: 'Bloqueas el próximo debuff que te envíe el rival.' },
         { id: 'buff_double',  emoji: '×2', name: 'Doble Poder',    desc: 'Tu próxima palabra vale el doble de poder.' },
-        { id: 'buff_discard', emoji: '♻️', name: '+2 Descartes',   desc: 'Recupera 2 descartes ahora mismo.' },
+        { id: 'buff_streak',  emoji: '💫', name: 'Racha',           desc: 'Tus próximas 3 palabras suman +2 poder adicional cada una.' },
     ],
     debuff: [
-        { id: 'debuff_freeze',  emoji: '❄️', name: 'Congelar',      desc: 'El rival pierde su próxima jugada.' },
+        { id: 'debuff_chaos',   emoji: '🎲', name: 'Caos Total',     desc: 'Reemplaza 3 letras aleatorias del rival por letras de su propia bolsa.' },
         { id: 'debuff_burn',    emoji: '🔥', name: 'Quemar',        desc: 'Una ficha aleatoria del rival queda inutilizable 10s.' },
-        { id: 'debuff_steal',   emoji: '💀', name: 'Robar Poder',   desc: 'Robas 10 de poder al rival directamente.' },
+        { id: 'debuff_amputar', emoji: '✂️', name: 'Amputar',       desc: 'Elimina la letra de mayor valor de la mano del rival.' },
         { id: 'debuff_shuffle', emoji: '🌀', name: 'Caos',          desc: 'La mano del rival se revuelve aleatoriamente.' },
     ]
 };
@@ -3505,7 +3527,8 @@ let duelState = {
     milestone25Used: false,
     milestone50Used: false,
     nextWordDouble: false,
-    freezeActive: false,
+    shieldActive: false,
+    streakLeft: 0,
     discardMode: false,
     discardsLeft: 4,
     hand: [],
@@ -3940,10 +3963,6 @@ function calcDuelWordScore(word) {
 }
 
 async function duelPlayWord() {
-    if (duelState.freezeActive) {
-        duelFeedback('❄️ ¡Estás congelado!', 'error');
-        return;
-    }
     const ids = duelState.selectedIds;
     if (ids.length < 2) { duelFeedback('Mínimo 2 letras', 'error'); return; }
 
@@ -3956,6 +3975,7 @@ async function duelPlayWord() {
 
     let pts = calcDuelWordScore(word);
     if (duelState.nextWordDouble) { pts *= 2; duelState.nextWordDouble = false; }
+    if (duelState.streakLeft > 0) { pts += 2; duelState.streakLeft--; updateDuelBuffBar(); }
 
     duelState.myScore += pts;
     duelState.myWords++;
@@ -4025,7 +4045,8 @@ function updateDuelBuffBar() {
     if (duelState.upgrades.valueBoost) buffs.push(['⬆️Val', 'Valor Mejorado']);
     duelState.upgrades.posDouble.forEach(p => buffs.push([`×2[${p+1}]`, `Posición ${p+1} ×2`]));
     if (duelState.nextWordDouble) buffs.push(['×2próx', 'Próxima palabra vale el doble', 'color:var(--gold)']);
-    if (duelState.freezeActive) buffs.push(['❄️', 'Congelado']);
+    if (duelState.shieldActive) buffs.push(['🛡️', 'Escudo activo — bloquea 1 debuff', 'color:#6ab0d8']);
+    if (duelState.streakLeft > 0) buffs.push([`💫×${duelState.streakLeft}`, `Racha: +2 poder en próximas ${duelState.streakLeft} palabras`, 'color:var(--gold)']);
     bar.innerHTML = buffs.map(([l, tip, sty]) =>
         `<span class="buff-tag" title="${tip}" style="cursor:help;${sty||''}">${l}</span>`
     ).join('');
@@ -4074,9 +4095,32 @@ async function chooseDuelCard(type, cardId) {
     if (type === 'buff') {
         applyDuelBuff(cardId);
     } else {
-        // Send debuff effect to rival via Firebase
         const rivalSide = duelState.mySide === 'blue' ? 'red' : 'blue';
-        await db.ref(`letrario_duels/${duelState.salaCode}/effects/${rivalSide}`).push({ id: cardId, ts: Date.now() });
+        const effect = { id: cardId, ts: Date.now() };
+
+        if (cardId === 'debuff_chaos') {
+            // Pick 3 low-value letters from my own bag (I'm sending to rival so use rival concept:
+            // we send letters drawn from duelState.bag — same shared bag, rival receives them)
+            const lowLetters = ['A','E','I','O','U','S','L','N','R','T'];
+            const picks = [];
+            // Try to pick from bag first, fallback to low value pool
+            for (let i = 0; i < 3; i++) {
+                if (duelState.bag.length > 0) {
+                    picks.push(duelState.bag.pop());
+                } else {
+                    picks.push(lowLetters[Math.floor(Math.random() * lowLetters.length)]);
+                }
+            }
+            effect.replacements = picks;
+        }
+
+        if (cardId === 'debuff_amputar') {
+            // We need to know rival's hand — we don't, so rival will handle it themselves
+            // Just send the effect, rival finds their own highest value tile
+            effect.letter = null; // rival resolves on their end
+        }
+
+        await db.ref(`letrario_duels/${duelState.salaCode}/effects/${rivalSide}`).push(effect);
     }
 }
 
@@ -4092,32 +4136,56 @@ function applyDuelBuff(id) {
         ds.nextWordDouble = true;
         updateDuelBuffBar();
         addDuelLog('×2 Próxima palabra vale el doble', ds.mySide);
-    } else if (id === 'buff_discard') {
-        ds.discardsLeft = Math.min(8, ds.discardsLeft + 2);
-        renderDuelHand();
-        addDuelLog('♻️ +2 descartes recuperados', ds.mySide);
+    } else if (id === 'buff_shield') {
+        ds.shieldActive = true;
+        updateDuelBuffBar();
+        addDuelLog('🛡️ ¡Escudo activado! El próximo debuff será bloqueado.', ds.mySide);
+    } else if (id === 'buff_streak') {
+        ds.streakLeft = 3;
+        updateDuelBuffBar();
+        addDuelLog('💫 ¡Racha activada! Las próximas 3 palabras suman +2 poder extra.', ds.mySide);
     }
 }
 
 function applyDuelEffect(effect) {
     if (!effect) return;
     const ds = duelState;
-    if (effect.id === 'debuff_freeze') {
-        ds.freezeActive = true;
+    // Shield blocks the next debuff
+    if (ds.shieldActive) {
+        ds.shieldActive = false;
         updateDuelBuffBar();
-        addDuelLog('❄️ ¡El rival te ha congelado! Pierdes 1 turno.', ds.mySide);
-        setTimeout(() => {
-            ds.freezeActive = false;
-            updateDuelBuffBar();
-            addDuelLog('❄️ Descongelado', ds.mySide);
-        }, 8000);
-    } else if (effect.id === 'debuff_steal') {
-        const stolen = 10;
-        db.ref('letrario_duels/' + ds.salaCode + '/power').transaction(current => {
-            const delta = ds.mySide === 'blue' ? -stolen : stolen;
-            return Math.max(-DUEL_WIN_POWER, Math.min(DUEL_WIN_POWER, (current || 0) + delta));
+        addDuelLog('🛡️ ¡Tu escudo bloqueó el ataque del rival!', ds.mySide);
+        return;
+    }
+    if (effect.id === 'debuff_chaos') {
+        // Replace 3 random tiles with letters from rival's own bag (low value)
+        const lowVal = effect.replacements || [];
+        let replaced = 0;
+        for (let i = 0; i < ds.hand.length && replaced < 3; i++) {
+            if (ds.hand[i].letter && ds.hand[i].letter !== '🔥') {
+                ds.hand[i].letter = lowVal[replaced] || ds.hand[i].letter;
+                ds.hand[i].chosenLetter = null;
+                replaced++;
+            }
+        }
+        ds.selectedIds = ds.selectedIds.filter(id => !ds.hand.slice(0, 3).map(t => t.id).includes(id));
+        renderDuelHand();
+        addDuelLog('🎲 ¡El rival revolvió 3 de tus letras con su caos!', 'sys');
+    } else if (effect.id === 'debuff_amputar') {
+        // Find and remove the highest value tile in own hand
+        let maxVal = -1, maxIdx = -1;
+        ds.hand.forEach((t, i) => {
+            if (!t.letter || t.letter === '🔥') return;
+            const v = LETTER_VALUES[t.letter] || 1;
+            if (v > maxVal) { maxVal = v; maxIdx = i; }
         });
-        addDuelLog(`💀 ¡El rival te robó ${stolen} de poder!`, 'sys');
+        if (maxIdx !== -1) {
+            const removed = ds.hand[maxIdx].letter;
+            ds.hand.splice(maxIdx, 1);
+            duelFillHand();
+            renderDuelHand();
+            addDuelLog(`✂️ ¡El rival amputó tu "${removed}" (${maxVal} pts)!`, 'sys');
+        }
     } else if (effect.id === 'debuff_shuffle') {
         ds.hand = shuffleArr(ds.hand);
         ds.selectedIds = [];
@@ -4262,8 +4330,8 @@ function seededShuffle(arr, rng) {
 }
 
 const DAILY_SHOP_IDS = [
-    'hand_large','recycle_extra','pos1','pos2','pos3','pos4','pos5','pos6','pos7',
-    'pos123','pos456','value_boost','shop_size','cincel'
+    'hand_large','alquimia','pos1','pos2','pos3','pos4','pos5','pos6','pos7',
+    'pos123','pos456','value_boost','comodin_extra','cincel'
 ];
 
 function getDailyShopOffers(visitIndex, rng) {
@@ -4372,8 +4440,14 @@ function openDailyShop() {
     document.getElementById('shop-coins').textContent = gs.coins + ' 🪙';
 
     const grid = document.getElementById('shop-grid');
-    grid.innerHTML = offers.map((item, idx) => {
-        const canAfford = gs.coins >= item.price;
+    // Daily mode: prices are halved (rounded up)
+    const dailyOffers = offers.map(item => ({
+        ...item,
+        dailyPrice: Math.ceil(item.price / 2)
+    }));
+    gs._dailyOffers = dailyOffers;
+    grid.innerHTML = dailyOffers.map((item, idx) => {
+        const canAfford = gs.coins >= item.dailyPrice;
         const cls = !canAfford ? 'cant-afford' : '';
         return `<div class="shop-item ${cls}" onclick="buyDailyItem(${idx})">
             <div class="shop-item-icon emoji-icon">${item.emoji}</div>
@@ -4381,7 +4455,7 @@ function openDailyShop() {
                 <div class="shop-item-name">${item.name}</div>
                 <div class="shop-item-desc">${item.desc}</div>
             </div>
-            <div class="shop-item-price">${item.price}🪙</div>
+            <div class="shop-item-price">${item.dailyPrice}🪙</div>
         </div>`;
     }).join('');
 
@@ -4391,11 +4465,34 @@ function openDailyShop() {
 function buyDailyItem(idx) {
     const gs = gameState;
     const item = gs._dailyOffers[idx];
-    if (!item || gs.coins < item.price) return;
-    gs.coins -= item.price;
+    if (!item) return;
+    const price = item.dailyPrice ?? item.price;
+    if (gs.coins < price || !item.canBuy(gs)) return;
+    gs.coins -= price;
     item.apply(gs);
     renderBuffBar();
-    openDailyShop(); // re-render
+    renderDailyShop(); // re-render without advancing shop visit
+}
+
+function renderDailyShop() {
+    const gs = gameState;
+    document.getElementById('shop-sub').textContent = `☠ Modo Diario · ${gs.coins} esencia`;
+    document.getElementById('shop-coins').textContent = gs.coins + ' 🪙';
+    const grid = document.getElementById('shop-grid');
+    grid.innerHTML = gs._dailyOffers.map((item, idx) => {
+        const price = item.dailyPrice ?? item.price;
+        const canAfford = gs.coins >= price;
+        const canBuy = item.canBuy(gs);
+        const cls = (!canAfford || !canBuy) ? 'cant-afford' : '';
+        return `<div class="shop-item ${cls}" onclick="buyDailyItem(${idx})">
+            <div class="shop-item-icon emoji-icon">${item.emoji}</div>
+            <div class="shop-item-body">
+                <div class="shop-item-name">${item.name}</div>
+                <div class="shop-item-desc">${item.desc}</div>
+            </div>
+            <div class="shop-item-price">${price}🪙</div>
+        </div>`;
+    }).join('');
 }
 
 function closeDailyShop() {
