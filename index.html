@@ -1854,7 +1854,7 @@ const SHOP_ITEMS = [
         id: 'comodin_extra', name: 'Comodín Extra', emoji: '🃏',
         desc: 'Añade 1 ficha comodín (✦) a tu bolsa. Se puede comprar varias veces.',
         price: 5, weight: 2,
-        canBuy: gs => true,
+        canBuy: gs => !(gs.dailyBoughtIds || []).includes('comodin_extra'),
         apply: gs => { gs.bag.push('*'); }
     },
     {
@@ -1890,14 +1890,20 @@ const SHOP_ITEMS = [
         desc: 'Las letras en las posiciones 1, 2 y 3 valen el doble.',
         price: 8, weight: 2,
         canBuy: gs => ![0,1,2].every(p => gs.upgrades.posDouble.includes(p)),
-        apply: gs => { [0,1,2].forEach(p => { if (!gs.upgrades.posDouble.includes(p)) gs.upgrades.posDouble.push(p); }); }
+        apply: gs => {
+            [0,1,2].forEach(p => { if (!gs.upgrades.posDouble.includes(p)) gs.upgrades.posDouble.push(p); });
+            if (gs.dailyBoughtIds) ['pos1','pos2','pos3'].forEach(id => { if (!gs.dailyBoughtIds.includes(id)) gs.dailyBoughtIds.push(id); });
+        }
     },
     {
         id: 'pos456', name: 'Posición [4][5][6] ×2', emoji: '🎯',
         desc: 'Las letras en las posiciones 4, 5 y 6 valen el doble.',
         price: 8, weight: 2,
         canBuy: gs => ![3,4,5].every(p => gs.upgrades.posDouble.includes(p)),
-        apply: gs => { [3,4,5].forEach(p => { if (!gs.upgrades.posDouble.includes(p)) gs.upgrades.posDouble.push(p); }); }
+        apply: gs => {
+            [3,4,5].forEach(p => { if (!gs.upgrades.posDouble.includes(p)) gs.upgrades.posDouble.push(p); });
+            if (gs.dailyBoughtIds) ['pos4','pos5','pos6'].forEach(id => { if (!gs.dailyBoughtIds.includes(id)) gs.dailyBoughtIds.push(id); });
+        }
     },
     {
         id: 'pos7etc', name: 'Posición [7+] ×2', emoji: '🎯',
@@ -3293,7 +3299,7 @@ function setFeedback(msg, type) {
     const el = document.getElementById('feedback');
     el.textContent = msg;
     el.className = 'feedback ' + type;
-    if (msg && type === 'err') {
+    if (msg && (type === 'err' || type === 'ok')) {
         clearTimeout(el._feedbackTimer);
         el._feedbackTimer = setTimeout(() => {
             if (el.textContent === msg) { el.textContent = ''; el.className = 'feedback'; }
@@ -4531,7 +4537,15 @@ function buyDailyItem(idx) {
     item.apply(gs);
     if (DAILY_ONCE_IDS.includes(item.id)) {
         if (!gs.dailyBoughtIds) gs.dailyBoughtIds = [];
-        gs.dailyBoughtIds.push(item.id);
+        if (!gs.dailyBoughtIds.includes(item.id)) gs.dailyBoughtIds.push(item.id);
+    }
+    // Auto-mark packs if all constituent positions are now covered
+    if (!gs.dailyBoughtIds) gs.dailyBoughtIds = [];
+    if ([0,1,2].every(p => gs.upgrades.posDouble.includes(p))) {
+        ['pos123','pos1','pos2','pos3'].forEach(id => { if (!gs.dailyBoughtIds.includes(id)) gs.dailyBoughtIds.push(id); });
+    }
+    if ([3,4,5].every(p => gs.upgrades.posDouble.includes(p))) {
+        ['pos456','pos4','pos5','pos6'].forEach(id => { if (!gs.dailyBoughtIds.includes(id)) gs.dailyBoughtIds.push(id); });
     }
     renderBuffBar();
     renderDailyShop(); // re-render without advancing shop visit
