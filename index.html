@@ -1696,7 +1696,8 @@ const CONFIG = {
     MAX_HAND: 12,
     MAX_JUGADAS: 8,
     MAX_DISCARDS: 8,
-    DAILY_SHOP_THRESHOLD: 50,  // pts to reach shop in daily mode
+    DAILY_SHOP_THRESHOLD: 50,  // base pts (first two shops)
+    dailyShopGap: (visitsDone) => 50 * (Math.floor(visitsDone / 2) + 1),  // 50,50,100,100,150,150...
     roundGoal: (level, round, isBoss) => {
         // Con nuevo sistema: palabra 4 letras ~17pts, 5 letras ~26pts, 6 letras ~37pts
         // 5 jugadas por ronda → potencial ~85-185 pts por ronda
@@ -2671,10 +2672,11 @@ function renderHUD() {
         document.getElementById('hud-round').textContent = `☠ Diario · ${lettersLeft} letras`;
 
         const progress = gs.totalScore - dailyLastShopAt;
-        const barPct = Math.min(100, (progress / CONFIG.DAILY_SHOP_THRESHOLD) * 100);
+        const gap = typeof getDailyShopGap === 'function' ? getDailyShopGap() : CONFIG.DAILY_SHOP_THRESHOLD;
+        const barPct = Math.min(100, (progress / gap) * 100);
         document.getElementById('hud-bar').style.width = barPct + '%';
         document.getElementById('hud-prog-cur').textContent = gs.totalScore;
-        document.getElementById('hud-prog-goal').textContent = `Tienda: ${dailyLastShopAt + CONFIG.DAILY_SHOP_THRESHOLD}`;
+        document.getElementById('hud-prog-goal').textContent = `Tienda: ${dailyLastShopAt + gap}`;
         document.getElementById('boss-row').style.display = 'none';
         return;
     }
@@ -4471,10 +4473,15 @@ function surrenderDaily() {
 }
 
 
+function getDailyShopGap() {
+    return CONFIG.dailyShopGap(dailyShopVisit); // visitsDone = shops already opened
+}
+
 function checkDailyShop() {
     if (!gameState || !gameState.dailyMode) return false;
-    if (gameState.totalScore >= dailyLastShopAt + CONFIG.DAILY_SHOP_THRESHOLD) {
-        dailyLastShopAt += CONFIG.DAILY_SHOP_THRESHOLD;
+    const gap = getDailyShopGap();
+    if (gameState.totalScore >= dailyLastShopAt + gap) {
+        dailyLastShopAt += gap;
         setTimeout(openDailyShop, 600);
         return true;
     }
