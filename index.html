@@ -1777,7 +1777,7 @@ const SHOP_ITEMS = [
         id: 'hand_large', name: 'Mano Grande', emoji: '✋',
         desc: '+1 letra en mano permanentemente para toda la partida. Acumulable hasta 5 veces.',
         price: 4, weight: 3,
-        canBuy: gs => gs.upgrades.handBonus < 5,
+        canBuy: gs => gs.upgrades.handBonus < 5 && !(gs.dailyVisitBoughtIds || []).includes('hand_large'),
         apply: gs => gs.upgrades.handBonus++
     },
     {
@@ -1906,11 +1906,45 @@ const SHOP_ITEMS = [
         }
     },
     {
+        id: 'letra_sagrada', name: 'Letra Sagrada', emoji: '🌟',
+        desc: 'Elige una letra — vale ×3 para el resto de la partida. Acumulable.',
+        price: 6, weight: 2,
+        canBuy: gs => true,
+        apply: gs => {
+            // Open letter picker — store pending upgrade and show picker
+            gs._pendingLetraSagrada = true;
+        }
+    },
+    {
+        id: 'avaricia', name: 'Avaricia', emoji: '💰',
+        desc: 'Palabras de 6+ letras generan +2🪙 extra.',
+        price: 5, weight: 3,
+        canBuy: gs => !gs.upgrades.avaricia,
+        apply: gs => gs.upgrades.avaricia = true
+    },
+    {
         id: 'pos7etc', name: 'Posición [7+] ×2', emoji: '🎯',
         desc: 'Todas las letras en posición 7 o más valen el doble.',
         price: 6, weight: 2,
         canBuy: gs => !gs.upgrades.posFrom7,
         apply: gs => gs.upgrades.posFrom7 = true
+    },
+    {
+        id: 'letra_sagrada', name: 'Letra Sagrada', emoji: '🌟',
+        desc: 'Elige una letra — esa letra vale ×3 para el resto de la partida.',
+        price: 6, weight: 2,
+        canBuy: gs => (gs.upgrades.letrasSagradas || []).length < 5,
+        apply: gs => {
+            if (!gs.upgrades.letrasSagradas) gs.upgrades.letrasSagradas = [];
+            gs._pendingLetraSagrada = true;
+        }
+    },
+    {
+        id: 'avaricia', name: 'Avaricia', emoji: '💰',
+        desc: 'Las palabras de 6+ letras generan +2🪙 extra.',
+        price: 5, weight: 3,
+        canBuy: gs => !gs.upgrades.avaricia,
+        apply: gs => gs.upgrades.avaricia = true
     },
 ];
 
@@ -2162,7 +2196,8 @@ function freshState() {
         shopVisits: 0,
         extraBagLetters: [],
         usedCurseIds: [],   // curses already used by previous bosses — never repeated
-        dailyBoughtIds: [],  // daily once-items already purchased
+        dailyBoughtIds: [],      // daily once-items already purchased
+        dailyVisitBoughtIds: [],  // items bought in current shop visit (reset each visit)
         secretWord: null,
         secretBonus: 0,
         secretReveal: '',
@@ -2182,6 +2217,8 @@ function freshState() {
             wordLevels: [0, 0, 0, 0, 0, 0],
             shopSize: false,
             freeShortWords: false,
+            letrasSagradas: [],
+            avaricia: false,
         },
         // Bonuses de nivel (se resetean al pasar de nivel)
         levelBonuses: {
@@ -2637,6 +2674,8 @@ function getScoreDetail(selected) {
         if (gs.upgrades.valueBoost && val === 1) val = 2;
         const lotd = gs.levelBonuses.letterOfDay.find(l => l.letter === letter);
         if (lotd) val *= 3;
+        const sagrada = (gs.upgrades.letrasSagradas || []).find(l => l.letter === letter);
+        if (sagrada) val *= sagrada.mult;
         if (gs.curses.vocalsCursed && VOWELS.has(letter)) val = 0;
         if (gs.curses.cursedLetters.includes(letter)) val = 0;
         if (gs.curses.burnedIds.includes(tile.id)) val = 0;
@@ -3018,7 +3057,8 @@ function playWord() {
     if (gs.dailyMode) {
         const wordLen = word.length;
         const earned = wordLen >= 5 ? 3 : wordLen >= 3 ? 2 : 1;
-        gs.coins += earned;
+        const avBonus = (gs.upgrades.avaricia && wordLen >= 6) ? 2 : 0;
+        gs.coins += earned + avBonus;
     }
 
     // Quitar fichas usadas
@@ -4384,9 +4424,9 @@ function seededShuffle(arr, rng) {
     return a;
 }
 
-const DAILY_ONCE_IDS = ['pos1','pos2','pos3','pos4','pos5','pos6','pos7','pos123','pos456','value_boost','comodin_extra','cincel']; // solo aparecen 1 vez
+const DAILY_ONCE_IDS = ['pos1','pos2','pos3','pos4','pos5','pos6','pos7','pos123','pos456','value_boost','comodin_extra','cincel','avaricia']; // solo aparecen 1 vez
 const DAILY_SHOP_IDS = [
-    'hand_large','alquimia','pos1','pos2','pos3','pos4','pos5','pos6','pos7',
+    'hand_large','alquimia','letra_sagrada','avaricia','pos1','pos2','pos3','pos4','pos5','pos6','pos7',
     'pos123','pos456','value_boost','comodin_extra','cincel'
 ];
 
@@ -4417,6 +4457,7 @@ const dailyCtx = {
 let dailyShopRNG = null;
 let dailyShopVisit = 0;
 let dailyLastShopAt = 0;
+let dailyVisitBoughtIds = []; // resets each shop visit
 let dailyPlayerName = '';
 let dailyRankEntries = [];
 
@@ -4472,6 +4513,47 @@ function startDailyMode() {
 }
 
 
+function openLetraSagradaPicker() {
+    const gs = gameState;
+    const used = (gs.upgrades.letrasSagradas || []).map(l => l.letter);
+    const available = ALL_LETTERS.filter(l => !used.includes(l));
+    if (available.length === 0) { renderDailyShop(); return; }
+
+    const overlay = document.createElement('div');
+    overlay.id = 'letra-sagrada-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px;padding:20px';
+    overlay.innerHTML = `
+        <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:4px;color:#c8922a;text-transform:uppercase">✦ Elige tu Letra Sagrada ✦</div>
+        <div style="font-family:'IM Fell English',serif;font-style:italic;font-size:13px;color:#8a7a5a">Esta letra valdrá ×3 para el resto de la partida</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;max-width:380px;justify-content:center;">
+            ${available.map(l => `
+                <div onclick="chooseLetraSagrada('${l}')" style="
+                    width:52px;height:62px;display:flex;flex-direction:column;align-items:center;
+                    justify-content:center;background:linear-gradient(145deg,#221e14,#12100a);
+                    border:1px solid #3a2e18;border-radius:4px;cursor:pointer;
+                    font-family:'Cinzel Decorative',serif;font-size:20px;color:#e8c97a;
+                    transition:all 0.2s;
+                " onmouseover="this.style.borderColor='#c8922a';this.style.transform='translateY(-2px)'"
+                   onmouseout="this.style.borderColor='#3a2e18';this.style.transform=''">
+                    ${l}
+                    <span style="font-family:'Cinzel',serif;font-size:10px;color:#8a7a5a">${LETTER_VALUES[l]||1}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function chooseLetraSagrada(letter) {
+    const gs = gameState;
+    if (!gs.upgrades.letrasSagradas) gs.upgrades.letrasSagradas = [];
+    gs.upgrades.letrasSagradas.push({ letter, mult: 3 });
+    const overlay = document.getElementById('letra-sagrada-overlay');
+    if (overlay) overlay.remove();
+    renderBuffBar();
+    renderDailyShop();
+}
+
 function surrenderDaily() {
     if (!gameState || !gameState.dailyMode) return;
     if (!confirm('¿Seguro que quieres rendirte? Se guardará tu puntuación actual.')) return;
@@ -4497,6 +4579,7 @@ function checkDailyShop() {
 function openDailyShop() {
     const gs = gameState;
     gs.shopVisits++;
+    dailyVisitBoughtIds = []; // reset per-visit tracker
     const offers = getDailyShopOffers(dailyShopVisit, dailyShopRNG);
     dailyShopVisit++;
     gs._dailyOffers = offers;
@@ -4535,9 +4618,15 @@ function buyDailyItem(idx) {
     if (gs.coins < price || !item.canBuy(gs)) return;
     gs.coins -= price;
     item.apply(gs);
+    if (item.id === 'hand_large') dailyVisitBoughtIds.push('hand_large');
     if (DAILY_ONCE_IDS.includes(item.id)) {
         if (!gs.dailyBoughtIds) gs.dailyBoughtIds = [];
         if (!gs.dailyBoughtIds.includes(item.id)) gs.dailyBoughtIds.push(item.id);
+    }
+    // Track per-visit purchases (for items that can repeat across visits but not within)
+    if (['hand_large'].includes(item.id)) {
+        if (!gs.dailyVisitBoughtIds) gs.dailyVisitBoughtIds = [];
+        gs.dailyVisitBoughtIds.push(item.id);
     }
     // Auto-mark packs if all constituent positions are now covered
     if (!gs.dailyBoughtIds) gs.dailyBoughtIds = [];
@@ -4548,6 +4637,11 @@ function buyDailyItem(idx) {
         ['pos456','pos4','pos5','pos6'].forEach(id => { if (!gs.dailyBoughtIds.includes(id)) gs.dailyBoughtIds.push(id); });
     }
     renderBuffBar();
+    if (gs._pendingLetraSagrada) {
+        gs._pendingLetraSagrada = false;
+        openLetraSagradaPicker();
+        return;
+    }
     renderDailyShop(); // re-render without advancing shop visit
 }
 
@@ -4573,7 +4667,13 @@ function renderDailyShop() {
 }
 
 function closeDailyShop() {
+    dailyVisitBoughtIds = [];
     hideAllModals();
+    if (gameState && gameState._pendingLetraSagrada) {
+        gameState._pendingLetraSagrada = false;
+        setTimeout(openLetraSagradaPicker, 300);
+        return;
+    }
     const gs = gameState;
     // Refill hand in case handBonus changed
     const handSize = CONFIG.HAND_SIZE + gs.upgrades.handBonus;
