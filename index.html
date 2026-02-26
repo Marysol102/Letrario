@@ -625,7 +625,8 @@
         .log-entry.ok  .log-word { color: var(--gold-light); }
         .log-entry.err .log-word { color: var(--red); }
         .log-entry.sys { color: var(--text-dim); font-style: italic; }
-        .log-word { color: var(--gold); font-weight: 500; letter-spacing: 2px; font-family: 'Cinzel', serif; }
+        .log-word { color: var(--gold); font-weight: 500; letter-spacing: 2px; font-family: 'Cinzel', serif; text-decoration: underline dotted; cursor: pointer; }
+        a.log-word:hover { color: var(--gold-light); }
         .log-pts  { color: var(--gold-light); font-family: 'Cinzel', serif; }
 
         /* ---- MODALS ---- */
@@ -3354,7 +3355,7 @@ function addLog(msg, type, pts) {
     if (type === 'sys') {
         entry.innerHTML = `<span>— ${msg}</span>`;
     } else {
-        entry.innerHTML = `<span class="log-word">${msg}</span>${pts !== undefined ? `<span class="log-pts">+${pts} pts</span>` : ''}`;
+        entry.innerHTML = `<a class="log-word" href="https://dle.rae.es/${msg.toLowerCase()}" target="_blank" rel="noopener" title="Ver en la RAE">${msg}</a>${pts !== undefined ? `<span class="log-pts">+${pts} pts</span>` : ''}`;
     }
     log.appendChild(entry);
     log.scrollTop = log.scrollHeight;
