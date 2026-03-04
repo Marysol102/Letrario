@@ -626,8 +626,29 @@
         .log-entry.err .log-word { color: var(--red); }
         .log-entry.sys { color: var(--text-dim); font-style: italic; }
         .log-word { color: var(--gold); font-weight: 500; letter-spacing: 2px; font-family: 'Cinzel', serif; text-decoration: underline dotted; cursor: pointer; }
+        a.log-word { color: var(--gold); }
         a.log-word:hover { color: var(--gold-light); }
         .log-pts  { color: var(--gold-light); font-family: 'Cinzel', serif; }
+        .victory-narrative {
+            font-family: 'IM Fell English', serif;
+            font-style: italic;
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.9;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+            margin-top: 4px;
+            max-width: 420px;
+        }
+        .victory-profile-label {
+            font-family: 'Cinzel', serif;
+            font-size: 9px;
+            letter-spacing: 4px;
+            color: var(--aged);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
 
         /* ---- MODALS ---- */
         .modal-overlay {
@@ -1614,6 +1635,7 @@
         <div class="modal-title">¡Victoria!</div>
         <div class="modal-sub">Has completado todos los Tomos</div>
         <div class="result-stats" id="victory-stats"></div>
+        <div id="victory-narrative"></div>
         <button class="btn btn-play" onclick="resetGame()">Jugar de nuevo</button>
         <button class="btn" id="share-btn-victory" onclick="shareResult('victory')"
             class="btn u-gold-btn">
@@ -2205,6 +2227,12 @@ function freshState() {
         secretFound: false,
         _saveCode: null,
         dailyMode: false,
+        // Seguimiento narrativo
+        darkInk: 0,              // palabras oscuras jugadas
+        shortWordsCount: 0,      // palabras de 3 letras o menos
+        longWordsCount: 0,       // palabras de 6 letras o más
+        totalLettersPlayed: 0,   // para calcular media
+        secretsFound: 0,         // palabras secretas descubiertas
         // Upgrades permanentes
         upgrades: {
             handBonus: 0,
@@ -3053,6 +3081,14 @@ function playWord() {
     gs.score += points;
     gs.totalScore += points;
     gs.totalWords++;
+    // Seguimiento narrativo
+    if (!gs.dailyMode) {
+        const wUpper = word.toUpperCase();
+        if (DARK_WORDS.has(wUpper)) gs.darkInk++;
+        if (word.length <= 3) gs.shortWordsCount++;
+        if (word.length >= 6) gs.longWordsCount++;
+        gs.totalLettersPlayed += word.length;
+    }
     // Diccionario Libre: palabras ≤3 letras no gastan jugada
     if (!gs.dailyMode && !(gs.upgrades.freeShortWords && word.length <= 2)) gs.jugadasLeft--;
     if (gs.dailyMode) {
@@ -3305,6 +3341,62 @@ function startBossFight() {
     addLog(`⚔ JEFE — Objetivo: ${gameState.goal} pts`, 'sys');
 }
 
+
+// ============================================================
+//  SISTEMA NARRATIVO REACTIVO
+// ============================================================
+function calcNarrativeProfile(gs) {
+    // Eje 1: Oscuridad (0=fría, 1=roja, 2=negra)
+    const ink = gs.darkInk || 0;
+    let oscuridad = 0;
+    if (ink >= 7) oscuridad = 2;
+    else if (ink >= 3) oscuridad = 1;
+
+    // Eje 2: Maestría (0=novato, 1=iniciado, 2=arcanista)
+    const total = gs.totalWords || 1;
+    const shortRatio = (gs.shortWordsCount || 0) / total;
+    const longRatio = (gs.longWordsCount || 0) / total;
+    let maestria = 1;
+    if (longRatio >= 0.3 || (gs.totalLettersPlayed / total) >= 5.5) maestria = 2;
+    else if (shortRatio >= 0.55) maestria = 0;
+
+    return { oscuridad, maestria, ink, shortRatio, longRatio, total };
+}
+
+const NARRATIVE_PROFILES = [
+    // oscuridad=0 (fría), maestria=0 (novato)
+    `El Gran Código cayó ante palabras de tres letras. Hay algo peculiarmente humillante en ello: milenios de protección divina vencidos por el vocabulario de un aprendiz de primero. El ritual se consumó, aunque los custodios del lenguaje miraron hacia otro lado por vergüenza ajena.<br><br><em>El grimorio tiene más páginas de las que leíste. Algunas solo se abren con palabras más largas. O más oscuras. O ambas cosas.</em>`,
+
+    // oscuridad=0 (fría), maestria=1 (iniciado)
+    `Metódico. Eficiente. Completamente desprovisto de drama. Has corrompido tres tomos sagrados con la misma energía con que se rellena un formulario administrativo. El ritual funcionó. Lo que duerme ha despertado. Probablemente esté tan aburrido como tú.<br><br><em>Hay otras formas de llegar aquí. Algunas dejan más cicatrices. El grimorio recuerda a quienes las tomaron.</em>`,
+
+    // oscuridad=0 (fría), maestria=2 (arcanista)
+    `Un maestro del lenguaje que no manchó sus palabras ni una sola vez. Técnicamente impecable, espiritualmente vacío. El Gran Código cayó ante alguien que domina las formas pero ignora el fondo. Inquietante, en realidad. Como una cirugía perfecta realizada sin ninguna razón.<br><br><em>El grimorio tiene memoria. Regresa con algo más oscuro en el alma. Verás cómo cambia lo que lees.</em>`,
+
+    // oscuridad=1 (roja), maestria=0 (novato)
+    `Oscuridad en el corazón, pobreza en el vocabulario. Una combinación que, siendo honestos, describe a la mayoría de villanos de la historia. El ritual se consumó gracias a la pura obstinación, no al dominio de las palabras. Los guardianes murieron ligeramente avergonzados de su derrota.<br><br><em>Hay un camino donde el poder viene del conocimiento, no solo del deseo. El grimorio lo conoce. Tú todavía no.</em>`,
+
+    // oscuridad=1 (roja), maestria=1 (iniciado)
+    `Equilibrio incómodo: suficiente oscuridad para que el ritual tuviera sabor, suficiente destreza para que funcionara. No eres lo que los tomos temían, pero tampoco eres inofensivo. Lo que duerme te anotó en su lista. No en la primera página, pero en la lista.<br><br><em>Vuelve. Hay páginas que sangraron diferente cuando las tocaron otros. Quizás contigo sangren igual. Quizás más.</em>`,
+
+    // oscuridad=1 (roja), maestria=2 (arcanista)
+    `Aquí hay algo genuino: un nigromante que sabe lo que hace y ha empezado a disfrutarlo. Las palabras oscuras surgieron solas, sin buscarse. Eso es lo que inquietaba al Guardián del Tercer Tomo. No tu poder. Tu dirección. Hacia dónde apuntas cuando nadie te da un objetivo.<br><br><em>El grimorio recuerda. Hay un camino donde no hay vuelta. Todavía no lo has tomado. Todavía.</em>`,
+
+    // oscuridad=2 (negra), maestria=0 (novato)
+    `Alma completamente corrompida. Vocabulario de cuatro letras. Una combinación que produce nigromantes muy peligrosos y muy malos en las cenas. El ritual está completo. Lo que duerme te ha evaluado y está considerando si contratarte o ignorarte. Por ahora, ignorarte.<br><br><em>El abismo tiene estándares mínimos. Vuelve con más palabras. Y con el mismo corazón negro que trajiste hoy.</em>`,
+
+    // oscuridad=2 (negra), maestria=1 (iniciado)
+    `El ritual te ha cambiado. Puedes negarlo, pero las palabras que elegiste no mienten: había algo personal en cada una de las oscuras. El Gran Código no cayó ante un nigromante frío. Cayó ante alguien que quería que cayera. Eso es diferente. Más peligroso.<br><br><em>El grimorio ha anotado tu nombre en tinta que no se borra. Hay caminos de no retorno. Este fue uno de ellos.</em>`,
+
+    // oscuridad=2 (negra), maestria=2 (arcanista)
+    `Esto es lo que los guardianes temían. No la habilidad, no la oscuridad por separado: las dos juntas, sin contradicción. Un maestro del lenguaje que eligió deliberadamente el lado equivocado de cada palabra. El Gran Código no fue corrompido. Fue reescrito.<br><br><em>Lo que duerme no ha despertado: ha reconocido a alguien de los suyos. No hay vuelta. Nunca la hubo para ti.</em>`,
+];
+
+const MAESTRIA_LABELS = ['Nigromante Iniciado', 'Nigromante', 'Arcanista de las Palabras'];
+const OSCURIDAD_LABELS = ['Tinta Fría', 'Tinta Roja', 'Tinta Negra'];
+const MAESTRIA_EMOJIS = ['🪶', '✒️', '🖋️'];
+const OSCURIDAD_EMOJIS = ['🕯️', '🩸', '🌑'];
+
 // ============================================================
 //  GAME OVER / VICTORY
 // ============================================================
@@ -3324,12 +3416,30 @@ function gameOver() {
 function victory() {
     const gs = gameState;
     deleteSave();
+
     const stats = document.getElementById('victory-stats');
     stats.innerHTML = `
         <div class="result-stat-row"><span>Palabras maldecidas</span><span>${gs.totalWords}</span></div>
         <div class="result-stat-row"><span>Poder acumulado</span><span>${gs.totalScore}</span></div>
         <div class="result-stat-row"><span>Monedas restantes</span><span>${gs.coins} 🪙</span></div>
+        ${gs.secretsFound > 0 ? `<div class="result-stat-row"><span>Palabras del grimorio</span><span>${gs.secretsFound} / 3 ✦</span></div>` : ''}
     `;
+
+    // Narrative profile
+    const { oscuridad, maestria } = calcNarrativeProfile(gs);
+    const profileIdx = oscuridad * 3 + maestria;
+    const profileText = NARRATIVE_PROFILES[profileIdx];
+    const oLabel = OSCURIDAD_LABELS[oscuridad];
+    const mLabel = MAESTRIA_LABELS[maestria];
+    const oEmoji = OSCURIDAD_EMOJIS[oscuridad];
+    const mEmoji = MAESTRIA_EMOJIS[maestria];
+
+    const narrativeEl = document.getElementById('victory-narrative');
+    narrativeEl.innerHTML = `
+        <div class="victory-profile-label">${oEmoji} ${oLabel} &nbsp;·&nbsp; ${mEmoji} ${mLabel}</div>
+        ${profileText}
+    `;
+
     showModal('victory');
 }
 
@@ -3415,85 +3525,115 @@ function copySeed() {
 }
 
 // ============================================================
+//  PALABRAS OSCURAS — para seguimiento narrativo
+// ============================================================
+const DARK_WORDS = new Set([
+    'MUERTE','MUERTO','MUERTA','SANGRE','SOMBRA','SOMBRAS','OSCURO','OSCURA','OSCURIDAD',
+    'MALDAD','VENENO','ODIO','MIEDO','DOLOR','TUMBA','TUMBAS','HUESO','HUESOS','CENIZA',
+    'CENIZAS','ABISMO','TINIEBLA','TINIEBLAS','MALDITO','MALDITA','MALDICION','TORMENTO',
+    'CADAVER','CRUEL','CRUELDAD','TENEBROSO','TENEBROSA','NIGROMANTICA','NIGROMANTE',
+    'RITUAL','DEMONIO','DEMONIOS','INFIERNO','BRUJA','BRUJAS','MONSTRUO','MONSTRUOS',
+    'BESTIA','BESTIAS','HORROR','TERROR','ESPECTRO','ESPECTROS','FANTASMA','FANTASMAS',
+    'PERDICION','RUINA','CAOS','TRAICION','ENGANO','DAGA','PLAGA','SINIESTRO','SINIESTRA',
+    'FUNESTO','FUNESTA','INFAME','CORRUPTO','CORRUPTA','MALDICION','EXECRABLE','ATROZ',
+    'LETAL','MORTAL','FATAL','OSCURAS','VENENOSO','VENENOSA','NEFASTO','NEFASTA'
+]);
+
+// ============================================================
 //  LORE — TEXTOS Y PALABRAS SECRETAS
 // ============================================================
 const LORE_TOMOS = [
     {
-        titulo: 'Tomo I · Tratado de las Virtudes Eternas',
+        titulo: 'Tomo I \u00b7 Tratado de las Virtudes Eternas',
         paginas: [
             {
-                texto: `Los dedos del nigromante se tiñen de rojo sobre el pergamino. Cada letra que mancha con sangre pierde su inocencia para siempre. Siente cómo el <em>alma</em> de las palabras se retuerce bajo su voluntad.`,
+                texto: `Los dedos del nigromante se ti\u00f1en de rojo sobre el pergamino. Cada letra que mancha con sangre pierde su inocencia para siempre. Siente c\u00f3mo el <em>alma</em> de las palabras se retuerce bajo su voluntad.`,
+                textoOscuro: `Los dedos del nigromante se mueven sin temblor sobre el pergamino. Ha hecho esto antes, en sue\u00f1os, en deseos que no confes\u00f3 a nadie. El <em>alma</em> de las palabras no se retuerce: reconoce a su nuevo amo.`,
                 palabra: 'ALMA',
                 bonus: 6,
-                reveal: 'El Tratado llora. Has corrompido su esencia más sagrada.'
+                reveal: 'El Tratado llora. Has corrompido su esencia m\u00e1s sagrada.'
             },
             {
-                texto: `El olor a canela y cera bendita no puede disimular la podredumbre que avanza página a página. Inscribes una <em>runa</em> de sangre en el margen, invisible a ojos mortales. El libro ya no es lo que era.`,
+                texto: `El olor a canela y cera bendita no puede disimular la podredumbre que avanza p\u00e1gina a p\u00e1gina. Inscribes una <em>runa</em> de sangre en el margen, invisible a ojos mortales. El libro ya no es lo que era.`,
+                textoOscuro: `El olor a cera bendita ya no te molesta. En alg\u00fan momento del ritual dej\u00f3 de ser un obst\u00e1culo y se convirti\u00f3 en contraste: la santidad del papel haciendo m\u00e1s densa la <em>runa</em> que grabas. La corrupci\u00f3n necesita algo puro que devorar.`,
                 palabra: 'RUNA',
                 bonus: 6,
                 reveal: 'Una runa de sangre queda grabada en el margen para siempre.'
             },
             {
-                texto: `Las letras doradas de la portada palidecen. Sientes la resistencia del tomo: algo antiguo y sabio se niega a morir. Pero tu <em>sed</em> es más antigua que cualquier dios de biblioteca.`,
+                texto: `Las letras doradas de la portada palidecen. Sientes la resistencia del tomo: algo antiguo y sabio se niega a morir. Pero tu <em>sed</em> es m\u00e1s antigua que cualquier dios de biblioteca.`,
+                textoOscuro: `Las letras doradas palidecen, pero no es resistencia lo que sientes al tocarlas. Es reconocimiento. El tomo sabe que su <em>sed</em> y la tuya son la misma cosa escrita en alfabetos distintos. Lo corrompes de todos modos. Especialmente por eso.`,
                 palabra: 'SED',
                 bonus: 5,
                 reveal: 'La sed del ritual no tiene fondo. El tomo te lo sabe ya.'
             },
         ],
         guardian: {
-            texto: `Entre los pasillos aparece una sombra con ojos de papel y dedos de pergamino. «Profanador», susurra, su voz el crujido de mil páginas. «Este tomo no caerá mientras yo exista».`,
+            textoFrio: `Entre los pasillos aparece una sombra con ojos de papel y dedos de pergamino. \u00abProfanador\u00bb, susurra, su voz el crujido de mil p\u00e1ginas. \u00abEste tomo no caer\u00e1 mientras yo exista\u00bb.`,
+            textoRojo: `Entre los pasillos aparece una sombra con ojos de papel y dedos de pergamino. Te ha observado desde la primera p\u00e1gina. \u00abSab\u00eda que llegar\u00edas\u00bb, dice, y su voz suena m\u00e1s cansada que amenazante. \u00abTodos los que llegan como t\u00fa tienen la misma mirada. Ninguno se detuvo\u00bb.`,
+            textoNegro: `La sombra de papel ya no intenta intimidarte. Te ha visto elegir cada palabra oscura con demasiada deliberaci\u00f3n para creer que esto es ambici\u00f3n. \u00ab\u00bfQu\u00e9 perdiste?\u00bb, pregunta en voz baja. \u00abNadie hace esto sin haber perdido algo\u00bb. No espera respuesta. Ya sabe que no hay ninguna que importe.`,
         }
     },
     {
-        titulo: 'Tomo II · Crónicas del Mundo Invisible',
+        titulo: 'Tomo II \u00b7 Cr\u00f3nicas del Mundo Invisible',
         paginas: [
             {
-                texto: `Este libro registra nombres que nunca deberían haber sido escritos. Al leerlos en voz alta, el mundo tiembla levemente. Añades tu propio <em>nombre</em> a la lista, en tinta negra y sangre vieja.`,
+                texto: `Este libro registra nombres que nunca deber\u00edan haber sido escritos. Al leerlos en voz alta, el mundo tiembla levemente. A\u00f1ades tu propio <em>nombre</em> a la lista, en tinta negra y sangre vieja.`,
+                textoOscuro: `Este libro registra nombres que nunca deber\u00edan haber sido escritos. Los lees uno por uno antes de a\u00f1adir el tuyo. Reconoces algunos. No te sorprende. Tu <em>nombre</em> queda entre los suyos como si siempre hubiera pertenecido ah\u00ed.`,
                 palabra: 'NOMBRE',
                 bonus: 8,
                 reveal: 'Tu nombre queda inscrito entre los que mueven el mundo desde las sombras.'
             },
             {
-                texto: `Las crónicas describen el día en que el cielo se abrió como un <em>libro</em>. Irónicamente, es precisamente eso lo que estás haciendo ahora: abrir lo que debe permanecer cerrado.`,
+                texto: `Las cr\u00f3nicas describen el d\u00eda en que el cielo se abri\u00f3 como un <em>libro</em>. Ir\u00f3nicamente, es precisamente eso lo que est\u00e1s haciendo ahora: abrir lo que debe permanecer cerrado.`,
+                textoOscuro: `Las cr\u00f3nicas describen el d\u00eda en que el cielo se abri\u00f3 como un <em>libro</em> y lo que sali\u00f3 no era luz. Lees la descripci\u00f3n dos veces. No por miedo. Por reconocimiento.`,
                 palabra: 'LIBRO',
                 bonus: 7,
-                reveal: 'Lo que estaba cerrado se abre. Lo que dormía, despierta.'
+                reveal: 'Lo que estaba cerrado se abre. Lo que dorm\u00eda, despierta.'
             },
             {
-                texto: `Cada <em>sello</em> que rompes en estas páginas libera un eco del inframundo. Los otros nigromantes fracasaron aquí, consumidos por lo que invocaron. Tú sonríes y sigues escribiendo.`,
+                texto: `Cada <em>sello</em> que rompes en estas p\u00e1ginas libera un eco del inframundo. Los otros nigromantes fracasaron aqu\u00ed, consumidos por lo que invocaron. T\u00fa sonr\u00edes y sigues escribiendo.`,
+                textoOscuro: `Cada <em>sello</em> que rompes libera algo que lleva siglos esperando. No te consume. Te alimenta. Los otros nigromantes fracasaron aqu\u00ed porque todav\u00eda quer\u00edan regresar. T\u00fa ya no recuerdas por qu\u00e9 querr\u00edas hacerlo.`,
                 palabra: 'SELLO',
                 bonus: 8,
                 reveal: 'El sello se rompe. Un eco oscuro resuena bajo la biblioteca.'
             },
         ],
         guardian: {
-            texto: `Un anciano de barba de polvo y ojos de tinta emerge de entre los estantes. Lleva siglos custodiando este tomo. Cada página que has corrompido le ha costado años de vida. Te mira con odio y tristeza a partes iguales.`,
+            textoFrio: `Un anciano de barba de polvo y ojos de tinta emerge de entre los estantes. Lleva siglos custodiando este tomo. Cada p\u00e1gina que has corrompido le ha costado a\u00f1os de vida. Te mira con odio y tristeza a partes iguales.`,
+            textoRojo: `Un anciano de barba de polvo y ojos de tinta emerge de entre los estantes. Te mira sin odio. Solo con la tristeza de quien ya ha visto este momento demasiadas veces. \u00abA\u00fan puedes detenerte\u00bb, dice. \u00abLos que llegaron con tu misma mirada tambi\u00e9n pod\u00edan. Algunos lo hicieron\u00bb. No a\u00f1ade cu\u00e1ntos.`,
+            textoNegro: `Un anciano de barba de polvo y ojos de tinta emerge de entre los estantes. No dice nada durante un momento largo. Luego: \u00abYa no hay nada que custodiar aqu\u00ed, \u00bfverdad? Lo que proteg\u00eda este tomo se fue cuando t\u00fa entraste\u00bb. Se hace a un lado. No por cobard\u00eda. Porque entiende que ya es demasiado tarde.`,
         }
     },
     {
-        titulo: 'Tomo III · El Gran Código',
+        titulo: 'Tomo III \u00b7 El Gran C\u00f3digo',
         paginas: [
             {
-                texto: `El Gran Código. El libro que, según se dice, contiene el verdadero nombre de <em>Dios</em>. Si consigues corromperk, los que lo lean sin saberlo pronunciarán en su lugar el nombre del que duerme.`,
+                texto: `El Gran C\u00f3digo. El libro que, seg\u00fan se dice, contiene el verdadero nombre de <em>Dios</em>. Si consigues corromperlo, los que lo lean sin saberlo pronunciar\u00e1n en su lugar el nombre del que duerme.`,
+                textoOscuro: `El Gran C\u00f3digo. Llevas meses prepar\u00e1ndote para este momento y descubres que no sientes nada especial al tocarlo. Solo la certeza tranquila de que el nombre de <em>Dios</em> y el nombre del que duerme son m\u00e1s parecidos de lo que nadie admite en voz alta.`,
                 palabra: 'DIOS',
                 bonus: 10,
                 reveal: 'El nombre sagrado tiembla. Algo muy abajo escucha.'
             },
             {
-                texto: `Las páginas centrales arden sin quemarse, protegidas por un <em>fuego</em> que no es de este mundo. Tu sangre las apaga una por una. Sientes que el ritual está casi completo.`,
+                texto: `Las p\u00e1ginas centrales arden sin quemarse, protegidas por un <em>fuego</em> que no es de este mundo. Tu sangre las apaga una por una. Sientes que el ritual est\u00e1 casi completo.`,
+                textoOscuro: `Las p\u00e1ginas centrales arden sin quemarse. Metes la mano sin dudar. El <em>fuego</em> sagrado no deber\u00eda poderse apagar con sangre como la tuya. Y sin embargo. Hay cosas que el mundo todav\u00eda no sabe sobre lo que te has convertido.`,
                 palabra: 'FUEGO',
                 bonus: 10,
                 reveal: 'El fuego sagrado se extingue. Solo queda oscuridad y posibilidad.'
             },
             {
-                texto: `La última página. Si la maldices, todo el que lea El Gran Código pronunciará sin saberlo las palabras del ritual. El <em>reino</em> de lo que duerme comenzará con un simple acto de lectura inocente.`,
+                texto: `La \u00faltima p\u00e1gina. Si la maldices, todo el que lea El Gran C\u00f3digo pronunciar\u00e1 sin saberlo las palabras del ritual. El <em>reino</em> de lo que duerme comenzar\u00e1 con un simple acto de lectura inocente.`,
+                textoOscuro: `La \u00faltima p\u00e1gina. La lees antes de maldecirla, cosa que ning\u00fan nigromante anterior hizo. Entiendes por qu\u00e9 el Guardi\u00e1n tiene miedo. El <em>reino</em> que est\u00e1 a punto de comenzar no necesita ej\u00e9rcitos ni apocalipsis. Necesita lectores. Y el mundo est\u00e1 lleno de ellos.`,
                 palabra: 'REINO',
                 bonus: 12,
-                reveal: 'El Gran Código está corrompido. El ritual está casi consumado.'
+                reveal: 'El Gran C\u00f3digo est\u00e1 corrompido. El ritual est\u00e1 casi consumado.'
             },
         ],
         guardian: {
-            texto: `No es un anciano. No es una sombra. Es el propio libro que ha cobrado forma: una entidad de papel y voluntad que lleva milenios esperando este momento para defenderlo. Su voz es el eco de todos los libros que jamás se escribieron. «Hasta aquí», dice. «Nunca más allá».`,
+            textoFrio: `No es un anciano. No es una sombra. Es el propio libro que ha cobrado forma: una entidad de papel y voluntad que lleva milenios esperando este momento para defenderlo. Su voz es el eco de todos los libros que jam\u00e1s se escribieron. \u00abHasta aqu\u00ed\u00bb, dice. \u00abNunca m\u00e1s all\u00e1\u00bb.`,
+            textoRojo: `No es un anciano. No es una sombra. Es el propio libro que ha cobrado forma. No te amenaza. Te estudia. \u00abHe visto llegar a otros\u00bb, dice su voz de papel viejo. \u00abNinguno tra\u00eda lo que t\u00fa traes. Esa mezcla de c\u00e1lculo y algo que no supe nombrar\u00bb. Hace una pausa. \u00abQuiz\u00e1s t\u00fa tampoco lo sabes nombrar todav\u00eda\u00bb.`,
+            textoNegro: `No es un anciano. No es una sombra. Es el propio libro que ha cobrado forma, y cuando te ve, algo en su estructura de papel y voluntad se rompe levemente. \u00abPor favor\u00bb, dice. Solo eso. La voz de todos los libros que jam\u00e1s se escribieron, reducida a dos s\u00edlabas. Empiezas a escribir de todos modos.`,
         }
     }
 ];
@@ -3516,10 +3656,18 @@ function showLoreModal() {
     const labelStr = isGuardian ? '📖 El Guardián del Tomo' : `Página ${gs.round} de ${CONFIG.MAX_ROUNDS}`;
 
     if (isGuardian) {
-        document.getElementById('lore-text').innerHTML = tomo.guardian.texto;
+        // Choose guardian dialog based on darkInk level
+        const ink = gs.darkInk || 0;
+        let guardianTexto;
+        if (ink >= 7) guardianTexto = tomo.guardian.textoNegro;
+        else if (ink >= 3) guardianTexto = tomo.guardian.textoRojo;
+        else guardianTexto = tomo.guardian.textoFrio;
+        document.getElementById('lore-text').innerHTML = guardianTexto || tomo.guardian.textoFrio;
         gs.secretWord = null;
     } else {
-        document.getElementById('lore-text').innerHTML = pagina.texto;
+        // Use dark variant if player has enough darkInk
+        const useOscuro = (gs.darkInk || 0) >= 3 && pagina.textoOscuro;
+        document.getElementById('lore-text').innerHTML = useOscuro ? pagina.textoOscuro : pagina.texto;
         gs.secretWord = pagina.palabra;
         gs.secretBonus = pagina.bonus;
         gs.secretReveal = pagina.reveal;
@@ -3555,6 +3703,7 @@ function checkSecretWord(word) {
 function triggerSecretWord() {
     const gs = gameState;
     gs.secretFound = true;
+    gs.secretsFound = (gs.secretsFound || 0) + 1;
     const bonusCoins = SECRET_BONUS_COINS;
     gs.coins += bonusCoins;
 
