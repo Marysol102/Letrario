@@ -1620,6 +1620,7 @@
         <div class="modal-title">Derrota</div>
         <div class="modal-sub">Se acabaron los intentos</div>
         <div class="result-stats" id="gameover-stats"></div>
+        <div id="gameover-narrative"></div>
         <button class="btn btn-play" onclick="resetGame()">Volver a intentarlo</button>
         <button class="btn" id="share-btn-gameover" onclick="shareResult('gameover')"
             class="btn u-gold-btn">
@@ -1799,7 +1800,7 @@ const SHOP_ITEMS = [
     {
         id: 'hand_large', name: 'Mano Grande', emoji: '✋',
         desc: '+1 letra en mano permanentemente para toda la partida. Acumulable hasta 5 veces.',
-        price: 4, weight: 3,
+        price: 4, weight: 7,
         canBuy: gs => gs.upgrades.handBonus < 5 && !(gs.dailyVisitBoughtIds || []).includes('hand_large'),
         apply: gs => gs.upgrades.handBonus++
     },
@@ -2225,6 +2226,7 @@ function freshState() {
         secretBonus: 0,
         secretReveal: '',
         secretFound: false,
+        lastSecretFound: null,  // palabra secreta de la ronda anterior
         _saveCode: null,
         dailyMode: false,
         // Seguimiento narrativo
@@ -3113,6 +3115,11 @@ function playWord() {
 
     setFeedback(`+${points} ${gs.dailyMode ? 'poder' : 'pts'}`, 'ok');
     addLog(word, 'ok', points);
+    // Reacción narrativa a palabras oscuras (solo Historia, ~60% de las veces para no saturar)
+    if (!gs.dailyMode && DARK_WORDS.has(word.toUpperCase()) && Math.random() < 0.6) {
+        const reaction = DARK_WORD_REACTIONS[Math.floor(Math.random() * DARK_WORD_REACTIONS.length)];
+        setTimeout(() => addLog(reaction, 'sys'), 300);
+    }
     showScorePop(`+${points}`);
     renderAll();
     renderCurseBar();
@@ -3194,6 +3201,10 @@ function goToShop() {
         gs.level++;
         gs.round = 1;
         if (gs.level > CONFIG.MAX_LEVELS) { victory(); return; }
+        // +1 maná permanente por superar guardián
+        gs.jugadas++;
+        gs.jugadasLeft++;
+        addLog('El Guardián caído te concede +1 jugada para el siguiente tomo', 'sys');
     } else {
         gs.round++;
     }
@@ -3393,6 +3404,35 @@ const NARRATIVE_PROFILES = [
 ];
 
 const MAESTRIA_LABELS = ['Nigromante Iniciado', 'Nigromante', 'Arcanista de las Palabras'];
+
+const GAMEOVER_PROFILES = [
+    // oscuridad=0 (fría), maestria=0 (novato)
+    `El tomo ganó. Francamente, con las palabras que trajiste, era lo esperado. Hasta los libros tienen orgullo.<br><br><em>Hay formas de volver más preparado. El grimorio no olvida, pero tampoco juzga. Mucho.</em>`,
+
+    // oscuridad=0 (fría), maestria=1 (iniciado)
+    `Tan cerca. Tan ordenado. Y aun así, el Gran Código sigue intacto. Quizás el problema no era la técnica. Quizás te faltaba algo que no se aprende en los libros correctos.<br><br><em>El grimorio tiene páginas que solo se abren cuando uno ha perdido antes. Ahora las verás.</em>`,
+
+    // oscuridad=0 (fría), maestria=2 (arcanista)
+    `Un maestro del lenguaje detenido por la pura resistencia del papel. El tomo debería sentirse orgulloso. Tú, en cambio, deberías preguntarte si dominar las palabras es suficiente sin entender lo que mueven.<br><br><em>Vuelve. Con el mismo dominio. Y quizás esta vez con algo más oscuro en la intención.</em>`,
+
+    // oscuridad=1 (roja), maestria=0 (novato)
+    `Tenías el instinto correcto y las herramientas equivocadas. El Guardián no te derrotó por ser más fuerte. Te derrotó porque sabía más palabras que tú. Eso duele de una forma particular.<br><br><em>El abismo recompensa a quienes vuelven habiendo aprendido. Y a quienes vuelven más oscuros.</em>`,
+
+    // oscuridad=1 (roja), maestria=1 (iniciado)
+    `A medio camino entre el ritual y el fracaso. El tomo resistió, pero está dañado. Algo de lo que dejaste aquí permanece entre sus páginas. El Guardián lo sabe. Por eso no parece del todo satisfecho con su victoria.<br><br><em>Lo que empieza no siempre termina la primera vez. Regresa y termina lo que empezaste.</em>`,
+
+    // oscuridad=1 (roja), maestria=2 (arcanista)
+    `El ritual casi se consumó. Casi. El tomo guardará este momento como una cicatriz. Tú guárdalos como una promesa.<br><br><em>Los grimorios recuerdan a quienes estuvieron cerca. La próxima vez, el Guardián tendrá miedo desde el principio.</em>`,
+
+    // oscuridad=2 (negra), maestria=0 (novato)
+    `Toda esa oscuridad y no fue suficiente. El querer no es el poder, aunque en nigromancia se parezcan más que en otras disciplinas. El tomo ganó esta vez. Que le aproveche mientras puede.<br><br><em>Vuelve con más palabras. La oscuridad ya la tienes. Es lo más difícil de conseguir.</em>`,
+
+    // oscuridad=2 (negra), maestria=1 (iniciado)
+    `El tomo ganó, pero a un precio. Lo que dejaste en sus páginas no se borrará. El Guardián pasará siglos intentando entender qué eras exactamente. Eso, en cierta forma, es también una victoria.<br><br><em>El grimorio ha tomado nota. La próxima vez, las páginas ya te conocerán.</em>`,
+
+    // oscuridad=2 (negra), maestria=2 (arcanista)
+    `Imposible. Y sin embargo. El tomo resiste, pero el Guardián sabe que fue por muy poco. En algún lugar entre las páginas que corrompiste quedó grabado tu paso. El Gran Código ya no es exactamente lo que era.<br><br><em>Vuelve. Lo que duerme escuchó el ritual. Solo necesita que lo termines.</em>`,
+];
 const OSCURIDAD_LABELS = ['Tinta Fría', 'Tinta Roja', 'Tinta Negra'];
 const MAESTRIA_EMOJIS = ['🪶', '✒️', '🖋️'];
 const OSCURIDAD_EMOJIS = ['🕯️', '🩸', '🌑'];
@@ -3409,7 +3449,22 @@ function gameOver() {
         <div class="result-stat-row"><span>Página</span><span>${gs.round}</span></div>
         <div class="result-stat-row"><span>Palabras maldecidas</span><span>${gs.totalWords}</span></div>
         <div class="result-stat-row"><span>Poder acumulado</span><span>${gs.totalScore}</span></div>
+        ${gs.secretsFound > 0 ? `<div class="result-stat-row"><span>Palabras del grimorio</span><span>${gs.secretsFound} / 3 ✦</span></div>` : ''}
     `;
+
+    const { oscuridad, maestria } = calcNarrativeProfile(gs);
+    const profileIdx = oscuridad * 3 + maestria;
+    const oLabel = OSCURIDAD_LABELS[oscuridad];
+    const mLabel = MAESTRIA_LABELS[maestria];
+    const oEmoji = OSCURIDAD_EMOJIS[oscuridad];
+    const mEmoji = MAESTRIA_EMOJIS[maestria];
+
+    const narrativeEl = document.getElementById('gameover-narrative');
+    narrativeEl.innerHTML = `
+        <div class="victory-profile-label">${oEmoji} ${oLabel} &nbsp;·&nbsp; ${mEmoji} ${mLabel}</div>
+        <div class="victory-narrative">${GAMEOVER_PROFILES[profileIdx]}</div>
+    `;
+
     showModal('gameover');
 }
 
@@ -3638,6 +3693,19 @@ const LORE_TOMOS = [
     }
 ];
 
+
+const DARK_WORD_REACTIONS = [
+    '— El tomo tiembla al leerla.',
+    '— Algo muy abajo escuchó eso.',
+    '— El Guardián anota tu elección.',
+    '— El grimorio reconoce esa palabra.',
+    '— Una página se mancha sola.',
+    '— El Guardián frunce el ceño. Continúa.',
+    '— Las letras doradas palidecen un instante.',
+    '— El tomo recuerda quién escribió esa palabra por última vez.',
+    '— Un eco oscuro recorre los estantes.',
+    '— Interesante elección para un ritual.',
+];
 const SECRET_BONUS_COINS = 5;
 
 function getLoreData(level, round, isBoss) {
@@ -3674,6 +3742,28 @@ function showLoreModal() {
         gs.secretFound = false;
     }
 
+    // Si el jugador encontró la palabra secreta de la ronda anterior, mencionarlo
+    if (gs.lastSecretFound) {
+        const w = gs.lastSecretFound;
+        const pageMentions = [
+            `El tomo aún vibra por haber escuchado <em>${w}</em>. Algo en estas páginas te mira de otra manera.`,
+            `Las páginas recuerdan que pronunciaste <em>${w}</em>. No era casualidad. El grimorio lo sabe.`,
+            `<em>${w}</em>. Esa palabra dejó una marca que este tomo no puede ignorar.`,
+            `Quien conoce <em>${w}</em> no es un profanador cualquiera. El tomo lo ha anotado en su margen.`,
+            `El eco de <em>${w}</em> todavía resuena entre los estantes. Las páginas que siguen lo han oído.`,
+        ];
+        const guardianMentions = [
+            `El Guardián sabe que encontraste <em>${w}</em>. Su postura ha cambiado. Ya no te subestima.`,
+            `«<em>${w}</em>», dice el Guardián en voz baja, casi para sí mismo. «Solo quien entiende el grimorio encuentra esa palabra». Una pausa. «Eso me preocupa».`,
+            `El Guardián te ha observado desde que pronunciaste <em>${w}</em>. Lo que sea que seas, no eres un profanador ordinario.`,
+        ];
+        const mentions = isGuardian ? guardianMentions : pageMentions;
+        const mention = mentions[Math.floor(Math.random() * mentions.length)];
+        const loreEl = document.getElementById('lore-text');
+        loreEl.innerHTML += `<br><br><span style="color:var(--gold-dim);font-size:13px;border-top:1px solid var(--border);display:block;padding-top:10px;margin-top:4px">${mention}</span>`;
+        gs.lastSecretFound = null;  // consumir, no repetir
+    }
+
     // Style the em tags as glowing gold
     document.querySelectorAll('#lore-text em').forEach(el => {
         el.style.cssText = 'color:var(--gold);font-style:italic;font-weight:bold;text-shadow:0 0 8px rgba(200,160,50,0.4)';
@@ -3704,6 +3794,7 @@ function triggerSecretWord() {
     const gs = gameState;
     gs.secretFound = true;
     gs.secretsFound = (gs.secretsFound || 0) + 1;
+    gs.lastSecretFound = gs.secretWord;  // la siguiente página lo recordará
     const bonusCoins = SECRET_BONUS_COINS;
     gs.coins += bonusCoins;
 
